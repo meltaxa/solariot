@@ -1,6 +1,6 @@
 # sungrow_client
 
-Use AWS Lambda to fetch your Sungrow Solar metrics and send these to the PVOutput website.
+Stream your Sungrow Inverter data to a real time dashboard.
 
 ## Prequisites
 
