@@ -8,6 +8,7 @@ import time
 inverter = "your.inverter.IP.address" # eg: 192.168.1.23
 pnconfig.subscribe_key = "sub-your-pubnub-sub-key"
 pnconfig.publish_key = "pub-your-pubnub-pub-key"
+api_rate = 3
 
 client = ModbusTcpClient(inverter, timeout=3, port=502)
 client.connect()
@@ -57,7 +58,7 @@ def load_registers(start,range=100):
           inverter[modmap.get(str(run))] = rr.registers[num]
   except Exception as err:
     print "[ERROR] %s" % err
-  time.sleep(1)
+  time.sleep(api_rate)
 
 def my_publish_callback(envelope, status):
   print envelope, status
