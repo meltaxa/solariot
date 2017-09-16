@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 1. Log in to the PubNub site and generate your API keys.
 
-2. Log in to the Freeboard website and create a dashboard by importing the supplied 
+2. Log in to the Freeboard website and create a dashboard by importing the supplied dashboard.json file.
 
 3. Download or clone this repository to your local workstation.
 
