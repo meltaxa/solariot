@@ -1,20 +1,13 @@
 #!/usr/bin/env python
 
-from pubnub.pnconfiguration import PNConfiguration
-from pubnub.pubnub import PubNub
 from pymodbus.client.sync import ModbusTcpClient
 import time
+from pubnub.pnconfiguration import PNConfiguration
+from pubnub.pubnub import PubNub
+import config
 
-inverter = "your.inverter.IP.address" # eg: 192.168.1.23
-pnconfig.subscribe_key = "sub-your-pubnub-sub-key"
-pnconfig.publish_key = "pub-your-pubnub-pub-key"
-api_rate = 3
-
-client = ModbusTcpClient(inverter, timeout=3, port=502)
+client = ModbusTcpClient(config.inverter_ip, timeout=3, port=502)
 client.connect()
-
-pnconfig = PNConfiguration()
-pubnub = PubNub(pnconfig)
 
 slave = 0x01
 inverter = {}
@@ -33,6 +26,7 @@ modmap = {"5008":  "internal_temp_10",
           "13006": "total_export_energy_10",
           "13008": "load_power",
           "13010": "export_power",
+          "13011": "grid_import_or_export",
           "13013": "total_charge_energy",
           "13015": "co2_emission_reduction",
           "13018": "total_use_energy",
@@ -46,10 +40,10 @@ modmap = {"5008":  "internal_temp_10",
           "13034": "pv_power"
          }
 
-def load_registers(start,range=100):
+def load_registers(start,COUNT=100):
   try:
-    rr = client.read_input_registers(start, count=range, unit=slave)
-    for num in range(0, range):
+    rr = client.read_input_registers(start, count=COUNT, unit=slave)
+    for num in range(0, COUNT):
       run = start + num + 1
       if modmap.get(str(run)):
         if '_10' in modmap.get(str(run)):
@@ -58,15 +52,25 @@ def load_registers(start,range=100):
           inverter[modmap.get(str(run))] = rr.registers[num]
   except Exception as err:
     print "[ERROR] %s" % err
-  time.sleep(api_rate)
+  time.sleep(1)
 
 def my_publish_callback(envelope, status):
   print envelope, status
+
+pnconfig = PNConfiguration()
+pnconfig.subscribe_key = config.subscribe_key
+pnconfig.publish_key = config.publish_key
+
+pubnub = PubNub(pnconfig)
 
 while True:
   try:
     load_registers(5000,100) 
     load_registers(13000,100) 
+    # Work out if the grid power is being imported or exported
+    if inverter['grid_import_or_export'] == 65535:
+      export_power = (65535 - inverter['export_power']) * -1
+      inverter['export_power'] = export_power
     print inverter
     pubnub.publish().channel("test_channel").message(inverter).async(my_publish_callback)
     time.sleep(1)

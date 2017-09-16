@@ -2,17 +2,26 @@
 
 Stream your Sungrow Inverter data to a real time dashboard.
 
+![alt tag](docs/freeboard-dashboard-solar-example.png)
+
 ## Prequisites
 
-This Sungrow modbus client has been tested on their Sungrow Inverter SHK5+ model.
+The Sungrow Inverter must be accessible on the network.
 
-The inverter must be accessible on the network.
+This script should work on most Sungrow Inverters. See the section below on confirmed
+models.
 
 Metrics are streamed to a [PubNub](https://www.pubnub.com)
 (publish/subscribe) service. This service is free for up to 100 devices and 1 million
 messages a month.
 
 Data is visualised using a free dashboard service from [Freeboard](https://freeboard.io/). 
+
+Install the required Python libraries for pymodbus and pubnub:
+
+```
+pip install -r requirements.txt
+```
 
 ## Installation
 
@@ -28,10 +37,15 @@ Data is visualised using a free dashboard service from [Freeboard](https://freeb
 
 6. Visit your Freeboard dashboard site.
 
-## Appendix
+## The Sungrow Modbus Map
 
-The Sungrow SH5K+ modbus map was generated manually by scraping all registers.
+This script works on the following confirmed Sungrow Inverter models:
+* SH5K+ (connected to a GCL Battery)
 
+The Sungrow SH5K+ modbus map was generated manually by scraping all registers. There are
+still outstanding metrics to be identified. Help me complete the map.
+
+Input registers:
 ```
 5008:  internal_temp
 5011:  pv1_voltage
@@ -58,5 +72,15 @@ The Sungrow SH5K+ modbus map was generated manually by scraping all registers.
 13027: total_discharge_energy
 13029: use_power
 13034: pv_power
+```
+
+Holding registers:
+```
+5000: Year
+5001: Month
+5002: Day
+5003: Hour (24hr)
+5004: Minute
+5005: Second
 ```
 
