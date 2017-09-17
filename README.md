@@ -1,7 +1,9 @@
-# sungrow_client
+# Sungrow Inverter Real Time Dashboard
 
 Stream your Sungrow Inverter data to a real time dashboard.
 
+Here's an example use case with [Freeboard](https://freeboard.io/) as a real time dashboard 
+and data visualization tool for your Sungrow Inverter (and attached battery) system:
 ![alt tag](docs/freeboard-dashboard-solar-example.png)
 
 ## Prequisites
@@ -25,7 +27,8 @@ pip install -r requirements.txt
 
 1. Log in to the PubNub site and generate your API keys.
 
-2. Download or clone this repository to your local workstation.
+2. Download or clone this repository to your local workstation. Install the required
+libraries (see Pre-requisites section above).
 
 3. Update the config.py file with your inverter's IP address and give your Inverter a unique name which will be used in dweet.io. Generate a random UUID at [https://www.uuidgenerator.net](https://www.uuidgenerator.net/).
 
