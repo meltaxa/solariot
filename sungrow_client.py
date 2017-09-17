@@ -2,8 +2,7 @@
 
 from pymodbus.client.sync import ModbusTcpClient
 import time
-from pubnub.pnconfiguration import PNConfiguration
-from pubnub.pubnub import PubNub
+import dweepy
 import config
 
 client = ModbusTcpClient(config.inverter_ip, timeout=3, port=502)
@@ -67,14 +66,14 @@ def load_registers(type,start,COUNT=100):
     print "[ERROR] %s" % err
   time.sleep(1)
 
-def my_publish_callback(envelope, status):
-  print envelope, status
+#def my_publish_callback(envelope, status):
+#  print envelope, status
 
-pnconfig = PNConfiguration()
-pnconfig.subscribe_key = config.subscribe_key
-pnconfig.publish_key = config.publish_key
+#pnconfig = PNConfiguration()
+#pnconfig.subscribe_key = config.subscribe_key
+#pnconfig.publish_key = config.publish_key
 
-pubnub = PubNub(pnconfig)
+#pubnub = PubNub(pnconfig)
 
 while True:
   try:
@@ -87,12 +86,9 @@ while True:
       export_power = (65535 - inverter['export_power']) * -1
       inverter['export_power'] = export_power
     inverter['timestamp'] = "%s/%s/%s %s:%02d:%02d" % (inverter['day'],inverter['month'],inverter['year'],inverter['hour'],inverter['minute'],inverter['second'])
-    print inverter
-    pubnub.publish().channel("test_channel").message(inverter).async(my_publish_callback)
-    if inverter['hour'] >= 5 and inverter['hour'] <= 20:
-      time.sleep(1.7)
-    else:
-      print "Throttle wait time to 15 minutes during the night..."
-      time.sleep(900)
+    result = dweepy.dweet_for(config.guid,inverter)
+    print result
   except Exception as err:
     print "[ERROR] %s" % err
+    client.close()
+    client.connect()

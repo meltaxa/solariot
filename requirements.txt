@@ -1,2 +1,2 @@
 pymodbus>=1.3.2
-pubnub>=4.0.13
+dweepy>=0.3.0

@@ -6,18 +6,16 @@ Stream your Sungrow Inverter data to a real time dashboard.
 
 ## Prequisites
 
-The Sungrow Inverter must be accessible on the network.
+The Sungrow Inverter must be accessible on the network using TCP.
 
 This script should work on most Sungrow Inverters. See the section below on confirmed
 models.
 
-Metrics are streamed to a [PubNub](https://www.pubnub.com)
-(publish/subscribe) service. This service is free for up to 100 devices and 1 million
-messages a month.
+Metrics are streamed to [dweet.io](https://dweet.io/) a free IoT messaging service. No sign up is required.
 
 Data is visualised using a free dashboard service from [Freeboard](https://freeboard.io/). 
 
-Install the required Python libraries for pymodbus and pubnub:
+Install the required Python libraries for pymodbus and dweepy:
 
 ```
 pip install -r requirements.txt
@@ -29,11 +27,11 @@ pip install -r requirements.txt
 
 2. Download or clone this repository to your local workstation.
 
-3. Update the python script with your inverter's IP address and the PubNub API keys.
+3. Update the config.py file with your inverter's IP address and give your Inverter a unique name which will be used in dweet.io. Generate a random UUID at (https://www.uuidgenerator.net)[https://www.uuidgenerator.net/].
 
-4. Run the python script.
+4. Run the sungrow_client script.
 
-5. Log in to the Freeboard website and create a dashboard using PubNub as a data source.
+5. Log in to the Freeboard website and create a dashboard using your dweet.io as a data source.
 
 ## The Sungrow Modbus Map
 
