@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 2. Download or clone this repository to your local workstation.
 
-3. Update the config.py file with your inverter's IP address and give your Inverter a unique name which will be used in dweet.io. Generate a random UUID at (https://www.uuidgenerator.net)[https://www.uuidgenerator.net/].
+3. Update the config.py file with your inverter's IP address and give your Inverter a unique name which will be used in dweet.io. Generate a random UUID at [https://www.uuidgenerator.net](https://www.uuidgenerator.net/).
 
 4. Run the sungrow_client script.
 
