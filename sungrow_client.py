@@ -40,16 +40,29 @@ modmap = {"5008":  "internal_temp_10",
           "13034": "pv_power"
          }
 
-def load_registers(start,COUNT=100):
+holding_register = {"5000": "year",
+                     "5001": "month",
+                     "5002": "day",
+                     "5003": "hour",
+                     "5004": "minute",
+                     "5005": "second",
+                    }
+
+def load_registers(type,start,COUNT=100):
   try:
-    rr = client.read_input_registers(start, count=COUNT, unit=slave)
+    if type == "read":
+      rr = client.read_input_registers(start, count=COUNT, unit=slave)
+    elif type == "holding":
+      rr = client.read_holding_registers(start, count=COUNT, unit=slave)
     for num in range(0, COUNT):
       run = start + num + 1
-      if modmap.get(str(run)):
+      if type == "read" and modmap.get(str(run)):
         if '_10' in modmap.get(str(run)):
           inverter[modmap.get(str(run))[:-3]] = float(rr.registers[num])/10
         else:
           inverter[modmap.get(str(run))] = rr.registers[num]
+      elif type == "holding" and holding_register.get(str(run)):
+        inverter[holding_register.get(str(run))] = rr.registers[num]
   except Exception as err:
     print "[ERROR] %s" % err
   time.sleep(1)
@@ -65,15 +78,21 @@ pubnub = PubNub(pnconfig)
 
 while True:
   try:
-    load_registers(5000,100) 
-    load_registers(13000,100) 
+    inverter = {}
+    load_registers("read",5000,100) 
+    load_registers("read",13000,100) 
+    load_registers("holding",4999,100) 
     # Work out if the grid power is being imported or exported
     if inverter['grid_import_or_export'] == 65535:
       export_power = (65535 - inverter['export_power']) * -1
       inverter['export_power'] = export_power
+    inverter['timestamp'] = "%s/%s/%s %s:%02d:%02d" % (inverter['day'],inverter['month'],inverter['year'],inverter['hour'],inverter['minute'],inverter['second'])
     print inverter
     pubnub.publish().channel("test_channel").message(inverter).async(my_publish_callback)
-    time.sleep(1)
+    if inverter['hour'] >= 5 and inverter['hour'] <= 20:
+      time.sleep(1.7)
+    else:
+      print "Throttle wait time to 15 minutes during the night..."
+      time.sleep(900)
   except Exception as err:
     print "[ERROR] %s" % err
-client.close()

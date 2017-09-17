@@ -27,15 +27,13 @@ pip install -r requirements.txt
 
 1. Log in to the PubNub site and generate your API keys.
 
-2. Log in to the Freeboard website and create a dashboard by importing the supplied dashboard.json file.
+2. Download or clone this repository to your local workstation.
 
-3. Download or clone this repository to your local workstation.
+3. Update the python script with your inverter's IP address and the PubNub API keys.
 
-4. Update the python script with your inverter's IP address and the PubNub API keys.
+4. Run the python script.
 
-5. Run the python script.
-
-6. Visit your Freeboard dashboard site.
+5. Log in to the Freeboard website and create a dashboard using PubNub as a data source.
 
 ## The Sungrow Modbus Map
 
