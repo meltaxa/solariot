@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from pymodbus.client.sync import ModbusTcpClient
-import time
 import dweepy
 import config
 
@@ -64,16 +63,6 @@ def load_registers(type,start,COUNT=100):
         inverter[holding_register.get(str(run))] = rr.registers[num]
   except Exception as err:
     print "[ERROR] %s" % err
-  time.sleep(1)
-
-#def my_publish_callback(envelope, status):
-#  print envelope, status
-
-#pnconfig = PNConfiguration()
-#pnconfig.subscribe_key = config.subscribe_key
-#pnconfig.publish_key = config.publish_key
-
-#pubnub = PubNub(pnconfig)
 
 while True:
   try:
