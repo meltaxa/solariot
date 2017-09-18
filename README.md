@@ -25,16 +25,15 @@ pip install -r requirements.txt
 
 ## Installation
 
-1. Log in to the PubNub site and generate your API keys.
-
-2. Download or clone this repository to your local workstation. Install the required
+1. Download or clone this repository to your local workstation. Install the required
 libraries (see Pre-requisites section above).
 
-3. Update the config.py file with your inverter's IP address and give your Inverter a unique name which will be used in dweet.io. Generate a random UUID at [https://www.uuidgenerator.net](https://www.uuidgenerator.net/).
+2. Update the config.py file with your inverter's IP address and give your Inverter a unique name which will be used in dweet.io. Generate a random UUID at [https://www.uuidgenerator.net](https://www.uuidgenerator.net/).
 
-4. Run the sungrow_client script.
+3. Run the sungrow_client.py script.
 
-5. Log in to the Freeboard website and create a dashboard using your dweet.io as a data source.
+4. Log in to the [Freeboard](https://freeboard.io/) and create a dashboard using your 
+dweet.io data source.
 
 ## The Sungrow Modbus Map
 
