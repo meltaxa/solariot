@@ -33,7 +33,7 @@ libraries (see Pre-requisites section above).
 3. Run the sungrow_client.py script.
 
 4. Log in to the [Freeboard](https://freeboard.io/) and create a dashboard using your 
-dweet.io data source.
+dweet.io data source. 
 
 ## The Sungrow Modbus Map
 
@@ -82,3 +82,38 @@ Holding registers:
 5005: Second
 ```
 
+## Extending the Sungrow Modbus Client
+
+This current script was designed for simplicity. However,
+if you wish to roll your own database and dashboard, opportunities exist to 
+extend this Sungrow Modbus Client to perform historical analytics and even
+alerting for certain monitoring thresholds.
+
+For example, you could extend the client to store the metrics in an Influxdb
+and visualise it using Grafana.
+
+Here's a snippet of the relevant code to make the current script talk to
+your Influxdb database:
+
+```
+from influxdb import InfluxDBClient
+
+# Connect to the Influxdb
+influx_client = InfluxDBClient('INFLUX_IP',
+                               8086,
+                               'INFLUX_USER',
+                               'INFLUX_PASSWORD',
+                               'SUNGROW_DBNAME')
+
+    [snip]
+
+    metrics = {}
+    tags = {}
+    metrics['measurement'] = "Inverter Name"
+    tags['location'] = "Inverter Location"
+    metrics['tags'] = tags
+    metrics['fields'] = inverter
+    print metrics
+    # Send to Influxdb
+    influx_client.write_points([metrics])
+```
