@@ -90,7 +90,9 @@ extend this Sungrow Modbus Client to perform historical analytics and even
 alerting for certain monitoring thresholds.
 
 For example, you could extend the client to store the metrics in an Influxdb
-and visualise it using Grafana.
+and visualise it using Grafana:
+
+![alt tag](docs/influxdb-grafana-example.png)
 
 Here's a snippet of the relevant code to make the current script talk to
 your Influxdb database:
