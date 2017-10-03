@@ -84,6 +84,8 @@ Holding registers:
 
 ## Extending the Sungrow Modbus Client
 
+### InfluxDB and Grafana
+
 This current script was designed for simplicity. However,
 if you wish to roll your own database and dashboard, opportunities exist to 
 extend this Sungrow Modbus Client to perform historical analytics and even
@@ -119,3 +121,25 @@ influx_client = InfluxDBClient('INFLUX_IP',
     # Send to Influxdb
     influx_client.write_points([metrics])
 ```
+
+### Integration with PVOutput.org and Grafana
+
+If you are using Grafana as your dashboard, a neat little trick is to then
+incorporate your Grafana panels with your PVOutput as system photos. From your
+PV Ladder page, click on your photos to view the real time Grafana images: 
+
+![alt tag](docs/integrate-grafana-with-pvoutput.png)
+
+1. Obtain your Grafana panel direct link, see their documentation: <http://docs.grafana.org/reference/sharing/#direct-link-rendered-image>.
+
+2. In your PVOutput "Edit System" page, add your Grafana panel link in the 
+"Image Link" field. Append "&png" to the link. Note, if the URL is longer than 
+100 characters, use a URL shortener service instead (such as <https://goo.gl>).
+Don't forget to append the "&png" string to your URL.
+
+3. Now go to your system in the PV Ladder page and click on the photos.
+
+Pro tip: You can add any URL image, such as a BOM radar image :wink:
+
+
+
