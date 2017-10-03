@@ -128,7 +128,7 @@ If you are using Grafana as your dashboard, a neat little trick is to then
 incorporate your Grafana panels with your PVOutput as system photos. From your
 PV Ladder page, click on your photos to view the real time Grafana images: 
 
-![alt tag](docs/integrate-grafana-with-pvoutput.png)
+![alt tag](docs/animated-pvoutout-grafana-integration.gif)
 
 1. Obtain your Grafana panel direct link, see their documentation: <http://docs.grafana.org/reference/sharing/#direct-link-rendered-image>.
 
