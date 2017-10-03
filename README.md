@@ -139,7 +139,4 @@ Don't forget to append the "&png" string to your URL.
 
 3. Now go to your system in the PV Ladder page and click on the photos.
 
-Pro tip: You can add any URL image, such as a BOM radar image :wink:
-
-
-
+Pro tip: You can add any URL image, such as the latest weather radar image :wink:
