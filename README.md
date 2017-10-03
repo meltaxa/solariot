@@ -6,6 +6,14 @@ Here's an example use case with [Freeboard](https://freeboard.io/) as a real tim
 and data visualization tool for your Sungrow Inverter (and attached battery) system:
 ![alt tag](docs/freeboard-dashboard-solar-example.png)
 
+### Table of Contents
+  * [Prequisites](#prequisites)
+  * [Installation](#installation)
+  * [The Sungrow Modbus Map](#the-sungrow-modbus-map)
+  * [Extending the Sungrow Modbus Client](#extending-the-sungrow-modbus-client)
+    + [InfluxDB and Grafana](#influxdb-and-grafana)
+    + [Integration with PVOutput.org and Grafana](#integration-with-pvoutputorg-and-grafana)
+
 ## Prequisites
 
 The Sungrow Inverter must be accessible on the network using TCP.
