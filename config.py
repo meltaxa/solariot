@@ -1,2 +1,1 @@
-inverter_ip = "your.inverter.ip.address"
-guid = "a-unique-identifier" # Get a random one here: https://www.uuidgenerator.net/
+# See config-example.py for required and optional settings.
