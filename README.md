@@ -23,7 +23,7 @@ With Grafana:
 
 ![alt tag](docs/influxdb-grafana-example.png)
 
-## Prequisites
+## Pre-requisites
 
 The Inverter must be accessible on the network using TCP.
 
@@ -47,8 +47,6 @@ register addresses Solariot should scan from.
 
 3. Run the solariot.py script.
 
-![alt tag](docs/influxdb-grafana-example.png)
-
 ## Integration with PVOutput.org and Grafana
 
 If you are using Grafana as your dashboard, a neat little trick is to then
@@ -66,5 +64,5 @@ Don't forget to append the "&png" string to your URL.
 
 3. Now go to your system in the PV Ladder page and click on the photos.
 
-Pro tip: You can add any URL image, such as the latest weather radar image 
+:bulb: Tip: You can add any URL image, such as the latest weather radar image 
 :wink:
