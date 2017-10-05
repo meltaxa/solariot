@@ -47,6 +47,38 @@ register addresses Solariot should scan from.
 
 3. Run the solariot.py script.
 
+## Next Steps
+
+Now that you are collecting the inverter's data, you'll want to ultimately
+display it in a dashboard as seen above. 
+
+There are many methods to stream the data. Here are a couple options, which
+both can be enabled in Solariot. Let me know if you have other methods, such
+as MQTT as the pub/sub service or another IoT Time Series database.
+
+### Dweet.io and Freeboard
+
+This is the quickest method and is a good place to start.
+
+Metrics are streamed to dweet.io a free IoT messaging service. No sign up is 
+required. All you need to do is create a unique identifier by updating the
+dweepy_uuid value in the config.py file.
+
+Data can then be visualised using a free dashboard service from 
+[Freeboard](https://freeboard.io/). You'll need to create your own dashboard,
+using dweet.io as your data source.
+
+### InfluxDB and Grafana
+
+Use a time series database such as 
+[InfluxDB](https://github.com/influxdata/influxdb) to store the inverter data as
+it streams in. You'll need to install this on your own server.
+
+To display the data in real time dashboard, you can use 
+[Grafana](https://grafana.com/get) to pull the metrics from InfluxDB. You can 
+either install your own Grafana server or use their free 
+[Grafana hosted solution](https://grafana.com/cloud/grafana).
+
 ## Integration with PVOutput.org and Grafana
 
 If you are using Grafana as your dashboard, a neat little trick is to then
