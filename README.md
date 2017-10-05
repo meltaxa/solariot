@@ -13,13 +13,13 @@ Once the Inverter has been queried, data is collected and stream to two optional
 destinations: dweet.io and / or an InfluxDB. From there, you will need to create
 your own dashboard, such as Freeboard and Grafana. 
 
-Here's an example use case with [Freeboard](https://freeboard.io/) as a real 
+Here's an example use case with [Freeboard](https://freeboard.io/board/YQ35fW) as a real 
 time dashboard and data visualization tool for a Sungrow Inverter (and attached
 battery) system:
 
 ![alt tag](docs/freeboard-dashboard-solar-example.png)
 
-With Grafana:
+With [Grafana](https://solar.mellican.com):
 
 ![alt tag](docs/influxdb-grafana-example.png)
 
@@ -51,7 +51,7 @@ register addresses Solariot should scan from.
 
 If you are using Grafana as your dashboard, a neat little trick is to then
 incorporate your Grafana panels with your PVOutput as system photos. From your
-PV Ladder page, click on your photos to view the real time Grafana images: 
+[PV Ladder page](https://pvoutput.org/ladder.jsp?f=1&pf=4102&pt=4102&sf=5130&st=5130&country=1&in=Sungrow&pn=Infinity&io=1&oc=0), click on your photos to view the real time Grafana images: 
 
 ![alt tag](docs/animated-pvoutout-grafana-integration.gif)
 
@@ -66,3 +66,8 @@ Don't forget to append the "&png" string to your URL.
 
 :bulb: Tip: You can add any URL image, such as the latest weather radar image 
 :wink:
+
+## Contributions
+
+If you have created a modbus register map for an inverter, please submit your
+file as a pull request for Solariot inclusion.
