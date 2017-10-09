@@ -10,7 +10,7 @@ read_register = {
   "5011":  "pv1_voltage_10",
   "5012":  "pv1_current_10",
   "5013":  "pv2_voltage_10",
-  "5014":  "pv1_current_10",
+  "5014":  "pv2_current_10",
   "5015":  "5015",    
   "5016":  "5016",    
   "5017":  "total_pv_power",
