@@ -47,6 +47,12 @@ register addresses Solariot should scan from.
 
 3. Run the solariot.py script.
 
+## Troubleshooting
+
+*[ERROR] 'ModbusIOException' object has no attribute 'registers'*
+Check your Inverter's "address" (as opposed to IP address) matches the slave 
+id in the config file. Default is 0x01.
+
 ## Next Steps
 
 Now that you are collecting the inverter's data, you'll want to ultimately
