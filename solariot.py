@@ -20,22 +20,46 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.constants import Endian
 from pymodbus.client.sync import ModbusTcpClient
+from influxdb import InfluxDBClient
 import config
 import dweepy
 import json
 import time
-from influxdb import InfluxDBClient
+import datetime
 import requests
+
+MIN_SIGNED   = -2147483648
+MAX_UNSIGNED =  4294967295
+
 requests.packages.urllib3.disable_warnings() 
+
+print "Load config %s" % config.model
+
+# SMA datatypes and their register lengths
+# S = Signed Number, U = Unsigned Number, STR = String
+sma_moddatatype = {
+  'S16':1,
+  'U16':1,
+  'S32':2,
+  'U32':2,
+  'U64':4,
+  'STR16':8,
+  'STR32':16
+  }
 
 # Load the modbus register map for the inverter
 modmap_file = "modbus-" + config.model
 modmap = __import__(modmap_file)
 
+print "load ModbusTcpClient"
+
 client = ModbusTcpClient(config.inverter_ip, 
-                         timeout=3, 
+                         timeout=config.timeout, 
                          port=config.inverter_port)
+print "Connect"
 client.connect()
 
 try:
@@ -64,6 +88,7 @@ def load_registers(type,start,COUNT=100):
                                          unit=config.slave)
     for num in range(0, int(COUNT)):
       run = int(start) + num + 1
+      print("%s,%s" % (str(run), str(rr.registers[num])))
       if type == "read" and modmap.read_register.get(str(run)):
         if '_10' in modmap.read_register.get(str(run)):
           inverter[modmap.read_register.get(str(run))[:-3]] = float(rr.registers[num])/10
@@ -74,27 +99,102 @@ def load_registers(type,start,COUNT=100):
   except Exception as err:
     print "[ERROR] %s" % err
 
+## function for polling data from the target and triggering writing to log file if set
+#
+def load_sma_register(registers):
+  from pymodbus.payload import BinaryPayloadDecoder
+  from pymodbus.constants import Endian
+  import datetime
+
+  ## request each register from datasets, omit first row which contains only column headers
+  for thisrow in registers:
+    name = thisrow[0]
+    startPos = thisrow[1]
+    type = thisrow[2]
+    format = thisrow[3]
+    
+    ## if the connection is somehow not possible (e.g. target not responding)
+    #  show a error message instead of excepting and stopping
+    try:
+      received = client.read_input_registers(address=startPos,
+                                             count=sma_moddatatype[type],
+                                              unit=config.slave)
+    except:
+      thisdate = str(datetime.datetime.now()).partition('.')[0]
+      thiserrormessage = thisdate + ': Connection not possible. Check settings or connection.'
+      print thiserrormessage
+      return  ## prevent further execution of this function
+    
+    message = BinaryPayloadDecoder.fromRegisters(received.registers, endian=Endian.Big)
+    ## provide the correct result depending on the defined datatype
+    if type == 'S32':
+      interpreted = message.decode_32bit_int()
+    elif type == 'U32':
+      interpreted = message.decode_32bit_uint()
+    elif type == 'U64':
+      interpreted = message.decode_64bit_uint()
+    elif type == 'STR16':
+      interpreted = message.decode_string(16)
+    elif type == 'STR32':
+      interpreted = message.decode_string(32)
+    elif type == 'S16':
+      interpreted = message.decode_16bit_int()
+    elif type == 'U16':
+      interpreted = message.decode_16bit_uint()
+    else: ## if no data type is defined do raw interpretation of the delivered data
+      interpreted = message.decode_16bit_uint()
+    
+    ## check for "None" data before doing anything else
+    if ((interpreted == MIN_SIGNED) or (interpreted == MAX_UNSIGNED)):
+      displaydata = None
+    else:
+      ## put the data with correct formatting into the data table
+      if format == 'FIX3':
+        displaydata = float(interpreted) / 1000
+      elif format == 'FIX2':
+        displaydata = float(interpreted) / 100
+      elif format == 'FIX1':
+        displaydata = float(interpreted) / 10
+      else:
+        displaydata = interpreted
+    
+    #print '************** %s = %s' % (name, str(displaydata))
+    inverter[name] = displaydata
+  
+  # Add timestamp
+  inverter["00000 - Timestamp"] = str(datetime.datetime.now()).partition('.')[0]
+
+
 while True:
   try:
     inverter = {}
-    for i in bus['read']:
-      load_registers("read",i['start'],i['range']) 
-    for i in bus['holding']:
-      load_registers("holding",i['start'],i['range']) 
-
-    # Sungrow inverter specifics:
-    # Work out if the grid power is being imported or exported
-    if config.model == "sungrow-sh5k" and \
-       inverter['grid_import_or_export'] == 65535:
-        export_power = (65535 - inverter['export_power']) * -1
-        inverter['export_power'] = export_power
-    inverter['timestamp'] = "%s/%s/%s %s:%02d:%02d" % (
-      inverter['day'],
-      inverter['month'],
-      inverter['year'],
-      inverter['hour'],
-      inverter['minute'],
-      inverter['second'])
+    
+    if 'sungrow-' in config.model:
+      for i in bus['read']:
+        load_registers("read",i['start'],i['range']) 
+      for i in bus['holding']:
+        load_registers("holding",i['start'],i['range']) 
+      
+      # Sungrow inverter specifics:
+      # Work out if the grid power is being imported or exported
+      if config.model == "sungrow-sh5k" and \
+        inverter['grid_import_or_export'] == 65535:
+          export_power = (65535 - inverter['export_power']) * -1
+          inverter['export_power'] = export_power
+          inverter['timestamp'] = "%s/%s/%s %s:%02d:%02d" % (
+            inverter['day'],
+            inverter['month'],
+            inverter['year'],
+            inverter['hour'],
+            inverter['minute'],
+            inverter['second'])
+    
+    if 'sma-' in config.model:
+      load_sma_register(modmap.sma_registers)
+    
+    for key, value in inverter.items():
+        print '"%s",%s' % (key,value)
+    
     print inverter
     try:
       result = dweepy.dweet_for(config.dweepy_uuid,inverter)
@@ -116,4 +216,4 @@ while True:
     print "[ERROR] %s" % err
     client.close()
     client.connect()
-  time.sleep(8)
+  time.sleep(config.scan_interval)

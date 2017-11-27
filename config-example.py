@@ -1,7 +1,12 @@
 inverter_ip = "192.168.1.23"
 inverter_port = 502
+# Slave Defaults
+# Sungrow: 0x01
+# SMA: 3
 slave = 0x01
 model = "sungrow-sh5k"
+timeout = 3
+scan_interval = 10
 # Optional:
 dweepy_uuid = "random-uuid"
 # Optional:
