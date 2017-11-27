@@ -5,7 +5,7 @@ data to a real time dashboard.
 
 Solariot will connect directly to your Inverter using Modbus TCP. 
 
-Currently, Solariot is able to talk to a Sungrow SH5K inverter. However,
+Currently, Solariot is able to talk to a SMA Sunny Boy and Sungrow SH5K inverter. However,
 the script is designed to allow any Modbus TCP enabled Inverter to be queried by
 using your own Modbus register map file.
 
