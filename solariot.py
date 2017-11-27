@@ -30,6 +30,7 @@ import json
 import time
 import datetime
 import requests
+from threading import Thread
 
 MIN_SIGNED   = -2147483648
 MAX_UNSIGNED =  4294967295
@@ -54,7 +55,7 @@ sma_moddatatype = {
 modmap_file = "modbus-" + config.model
 modmap = __import__(modmap_file)
 
-print "load ModbusTcpClient"
+print "Load ModbusTcpClient"
 
 client = ModbusTcpClient(config.inverter_ip, 
                          timeout=config.timeout, 
@@ -88,7 +89,6 @@ def load_registers(type,start,COUNT=100):
                                          unit=config.slave)
     for num in range(0, int(COUNT)):
       run = int(start) + num + 1
-      print("%s,%s" % (str(run), str(rr.registers[num])))
       if type == "read" and modmap.read_register.get(str(run)):
         if '_10' in modmap.read_register.get(str(run)):
           inverter[modmap.read_register.get(str(run))[:-3]] = float(rr.registers[num])/10
@@ -164,6 +164,17 @@ def load_sma_register(registers):
   # Add timestamp
   inverter["00000 - Timestamp"] = str(datetime.datetime.now()).partition('.')[0]
 
+def publish_influx(metrics):
+  target=flux_client.write_points([metrics])
+  print "[INFO] Sent to InfluxDB"
+
+def publish_dweepy(inverter):
+  try:
+    result = dweepy.dweet_for(config.dweepy_uuid,inverter)
+    print "[INFO] Sent to dweet.io"
+  except:
+    result = None
+
 
 while True:
   try:
@@ -192,15 +203,10 @@ while True:
     if 'sma-' in config.model:
       load_sma_register(modmap.sma_registers)
     
-    for key, value in inverter.items():
-        print '"%s",%s' % (key,value)
-    
     print inverter
-    try:
-      result = dweepy.dweet_for(config.dweepy_uuid,inverter)
-      print "[INFO] Sent to dweet.io"
-    except:
-      result = None
+
+    t = Thread(target=publish_dweepy, args=(inverter,))
+    t.start()
     if flux_client is not None:
       metrics = {}
       tags = {}
@@ -209,8 +215,8 @@ while True:
       tags['location'] = "Gabba"
       metrics['tags'] = tags
       metrics['fields'] = inverter
-      flux_client.write_points([metrics])
-      print "[INFO] Sent to InfluxDB"
+      t = Thread(target=publish_influx, args=(metrics,))
+      t.start()
 
   except Exception as err:
     print "[ERROR] %s" % err
