@@ -58,7 +58,9 @@ modmap = __import__(modmap_file)
 print "Load ModbusTcpClient"
 
 client = ModbusTcpClient(config.inverter_ip, 
-                         timeout=config.timeout, 
+                         timeout=config.timeout,
+                         RetryOnEmpty=True,
+                         retries=3,
                          port=config.inverter_port)
 print "Connect"
 client.connect()
