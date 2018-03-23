@@ -85,6 +85,8 @@ To display the data in real time dashboard, you can use
 either install your own Grafana server or use their free 
 [Grafana hosted solution](https://grafana.com/cloud/grafana).
 
+A json export of solarspy.live Grafana dashboard is available under the grafana folder.
+
 ## Integration with PVOutput.org and Grafana
 
 If you are using Grafana as your dashboard, a neat little trick is to then
