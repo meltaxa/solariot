@@ -17,3 +17,7 @@ influxdb_password = "password"
 influxdb_database = "inverter"
 influxdb_ssl = True
 influxdb_verify_ssl = False
+# Optional
+mqtt_server = "192.168.1.128"
+mqtt_port = 1883
+mqtt_topic = "inverter/stats"

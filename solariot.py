@@ -24,6 +24,7 @@ from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
 from pymodbus.client.sync import ModbusTcpClient
 from influxdb import InfluxDBClient
+import paho.mqtt.client as mqtt
 import config
 import dweepy
 import json
@@ -37,7 +38,7 @@ MAX_UNSIGNED =  4294967295
 
 requests.packages.urllib3.disable_warnings() 
 
-print "Load config %s" % config.model
+print ("Load config %s" % config.model)
 
 # SMA datatypes and their register lengths
 # S = Signed Number, U = Unsigned Number, STR = String
@@ -55,15 +56,21 @@ sma_moddatatype = {
 modmap_file = "modbus-" + config.model
 modmap = __import__(modmap_file)
 
-print "Load ModbusTcpClient"
+print ("Load ModbusTcpClient")
 
 client = ModbusTcpClient(config.inverter_ip, 
                          timeout=config.timeout,
                          RetryOnEmpty=True,
                          retries=3,
                          port=config.inverter_port)
-print "Connect"
+print("Connect")
 client.connect()
+
+try: 
+  mqtt_client = mqtt.Client('pv_data')
+  mqtt_client.connect(config.mqtt_server, port=config.mqtt_port)
+except:
+  mqtt_client = None
 
 try:
   flux_client = InfluxDBClient(config.influxdb_ip,
@@ -99,7 +106,7 @@ def load_registers(type,start,COUNT=100):
       elif type == "holding" and modmap.holding_register.get(str(run)):
         inverter[modmap.holding_register.get(str(run))] = rr.registers[num]
   except Exception as err:
-    print "[ERROR] %s" % err
+    print("[ERROR] %s" % err)
 
 ## function for polling data from the target and triggering writing to log file if set
 #
@@ -124,7 +131,7 @@ def load_sma_register(registers):
     except:
       thisdate = str(datetime.datetime.now()).partition('.')[0]
       thiserrormessage = thisdate + ': Connection not possible. Check settings or connection.'
-      print thiserrormessage
+      print( thiserrormessage)
       return  ## prevent further execution of this function
     
     message = BinaryPayloadDecoder.fromRegisters(received.registers, endian=Endian.Big)
@@ -168,15 +175,21 @@ def load_sma_register(registers):
 
 def publish_influx(metrics):
   target=flux_client.write_points([metrics])
-  print "[INFO] Sent to InfluxDB"
+  print ("[INFO] Sent to InfluxDB")
 
 def publish_dweepy(inverter):
   try:
     result = dweepy.dweet_for(config.dweepy_uuid,inverter)
-    print "[INFO] Sent to dweet.io"
+    print("[INFO] Sent to dweet.io")
   except:
     result = None
 
+def publish_mqtt(inverter):
+  try:
+    result = mqtt_client.publish(config.mqtt_topic, json.dumps(inverter).replace('"', '\"'))
+    print("[INFO] Published to MQTT")
+  except:
+    result = None
 
 while True:
   try:
@@ -205,7 +218,11 @@ while True:
     if 'sma-' in config.model:
       load_sma_register(modmap.sma_registers)
     
-    print inverter
+    print (inverter)
+
+    if mqtt_client is not None:
+      t = Thread(target=publish_mqtt, args=(inverter,))
+      t.start()
 
     t = Thread(target=publish_dweepy, args=(inverter,))
     t.start()
@@ -221,7 +238,7 @@ while True:
       t.start()
 
   except Exception as err:
-    print "[ERROR] %s" % err
+    print ("[ERROR] %s" % err)
     client.close()
     client.connect()
   time.sleep(config.scan_interval)
