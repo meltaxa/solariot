@@ -74,6 +74,15 @@ Data can then be visualised using a free dashboard service from
 [Freeboard](https://freeboard.io/). You'll need to create your own dashboard,
 using dweet.io as your data source.
 
+### MQTT Support
+
+This is a good way to push data to MQTT topics that you might subscribe various tools 
+such as Node-Red or Home Assistant to. Running your own MQTT server will mean you can
+also retrieve these values when your internet is offline.
+
+All you need to do is to set the `mqtt_server`, `mqtt_port` and `mqtt_topic` values in
+`config.py` file and you'll be up and running.
+
 ### InfluxDB and Grafana
 
 Use a time series database such as 
