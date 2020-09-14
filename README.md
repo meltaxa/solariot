@@ -120,3 +120,7 @@ Don't forget to append the "&png" string to your URL.
 
 If you have created a modbus register map for an inverter, please submit your
 file as a pull request for Solariot inclusion.
+
+## Acknowledgements
+
+* [rpvelloso](https://github.com/rpvelloso]) for the SungrowModbusTcpClient class that enables decryption of comms.

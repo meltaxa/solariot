@@ -23,6 +23,7 @@
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
 from pymodbus.client.sync import ModbusTcpClient
+import SungrowModbusTcpClient as sungrow
 from influxdb import InfluxDBClient
 import paho.mqtt.client as mqtt
 import config
@@ -56,15 +57,18 @@ sma_moddatatype = {
 modmap_file = "modbus-" + config.model
 modmap = __import__(modmap_file)
 
-print ("Load ModbusTcpClient")
+print ("Load relevant ModbusTcpClient")
 
-client = ModbusTcpClient(config.inverter_ip, 
-                         timeout=config.timeout,
-                         RetryOnEmpty=True,
-                         retries=3,
-                         port=config.inverter_port)
+# This will try the Sungrow client otherwise will default to the standard library.
+client = sungrow.SungrowModbusTcpClient(host=config.inverter_ip, 
+                                        timeout=config.timeout, 
+                                        RetryOnEmpty=True, 
+                                        retries=3, 
+                                        port=config.inverter_port)
 print("Connect")
 client.connect()
+
+#enc = SungrowModbusTcpClient(client)
 
 try: 
   mqtt_client = mqtt.Client('pv_data')
