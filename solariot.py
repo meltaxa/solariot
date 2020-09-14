@@ -68,8 +68,6 @@ client = sungrow.SungrowModbusTcpClient(host=config.inverter_ip,
 print("Connect")
 client.connect()
 
-#enc = SungrowModbusTcpClient(client)
-
 try: 
   mqtt_client = mqtt.Client('pv_data')
   mqtt_client.connect(config.mqtt_server, port=config.mqtt_port)
