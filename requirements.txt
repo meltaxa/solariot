@@ -4,3 +4,4 @@ dweepy>=0.3.0
 influxdb>=2.17.0
 python_dateutil>=2.6.1
 pytz>=2017.2
+pycrypto>=2.6.1
