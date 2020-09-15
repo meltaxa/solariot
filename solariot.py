@@ -67,6 +67,7 @@ client = sungrow.SungrowModbusTcpClient(host=config.inverter_ip,
                                         port=config.inverter_port)
 print("Connect")
 client.connect()
+client.close()
 
 try: 
   mqtt_client = mqtt.Client('pv_data')
@@ -195,6 +196,7 @@ def publish_mqtt(inverter):
 
 while True:
   try:
+    client.connect()
     inverter = {}
     
     if 'sungrow-' in config.model:
@@ -238,6 +240,7 @@ while True:
       metrics['fields'] = inverter
       t = Thread(target=publish_influx, args=(metrics,))
       t.start()
+    client.close()
 
   except Exception as err:
     print ("[ERROR] %s" % err)
