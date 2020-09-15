@@ -26,18 +26,20 @@ class SungrowModbusTcpClient(ModbusTcpClient):
            self.key = b'no encryption'
 
     def connect(self):
+        self.close()
         result = ModbusTcpClient.connect(self)
         if result and not self.key:
            self._getkey()
         self.fifo = bytes()
+        #print('connected: ', result)
         return result
 
     def close(self):
         ModbusTcpClient.close(self)
-        self.key = None
-        self.fifo = bytes()
+        #print('disconnected')
 
     def _send_cipher(self, request):
+        self.fifo = bytes()
         length = len(request)
         padding = 16 - (length % 16)
         self.transactionID = request[:2]
