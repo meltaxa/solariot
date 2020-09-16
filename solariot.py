@@ -57,14 +57,22 @@ sma_moddatatype = {
 modmap_file = "modbus-" + config.model
 modmap = __import__(modmap_file)
 
-print ("Load relevant ModbusTcpClient")
-
 # This will try the Sungrow client otherwise will default to the standard library.
-client = sungrow.SungrowModbusTcpClient(host=config.inverter_ip, 
-                                        timeout=config.timeout, 
-                                        RetryOnEmpty=True, 
-                                        retries=3, 
-                                        port=config.inverter_port)
+if 'sungrow-' in config.model:
+    print ("Load SungrowModbusTcpClient")
+    client = sungrow.SungrowModbusTcpClient(host=config.inverter_ip, 
+                                            timeout=config.timeout, 
+                                            RetryOnEmpty=True, 
+                                            retries=3, 
+                                            port=config.inverter_port)
+else:
+    print ("Load ModbusTcpClient")
+    client = ModbusTcpClient(host=config.inverter_ip, 
+                             timeout=config.timeout, 
+                             RetryOnEmpty=True, 
+                             retries=3, 
+                             port=config.inverter_port)
+
 print("Connect")
 client.connect()
 client.close()
