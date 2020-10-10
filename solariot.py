@@ -23,7 +23,7 @@
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
 from pymodbus.client.sync import ModbusTcpClient
-import SungrowModbusTcpClient as sungrow
+from SungrowModbusTcpClient import SungrowModbusTcpClient
 from influxdb import InfluxDBClient
 import paho.mqtt.client as mqtt
 import config
@@ -60,7 +60,7 @@ modmap = __import__(modmap_file)
 # This will try the Sungrow client otherwise will default to the standard library.
 if 'sungrow-' in config.model:
     print ("Load SungrowModbusTcpClient")
-    client = sungrow.SungrowModbusTcpClient(host=config.inverter_ip, 
+    client = SungrowModbusTcpClient.SungrowModbusTcpClient(host=config.inverter_ip, 
                                             timeout=config.timeout, 
                                             RetryOnEmpty=True, 
                                             retries=3, 
@@ -79,6 +79,8 @@ client.close()
 
 try: 
   mqtt_client = mqtt.Client('pv_data')
+  if 'config.mqtt_username' in globals():
+      mqtt_client.username_pw_set(config.mqtt_username,config.mqtt_password)
   mqtt_client.connect(config.mqtt_server, port=config.mqtt_port)
 except:
   mqtt_client = None
@@ -107,6 +109,9 @@ def load_registers(type,start,COUNT=100):
       rr = client.read_holding_registers(int(start), 
                                          count=int(COUNT), 
                                          unit=config.slave)
+    if len(rr.registers) != int(COUNT):
+      print("[WARN] Mismatched number ({}) of registers read".format(len(rr.registers)))
+      return
     for num in range(0, int(COUNT)):
       run = int(start) + num + 1
       if type == "read" and modmap.read_register.get(str(run)):
@@ -117,7 +122,7 @@ def load_registers(type,start,COUNT=100):
       elif type == "holding" and modmap.holding_register.get(str(run)):
         inverter[modmap.holding_register.get(str(run))] = rr.registers[num]
   except Exception as err:
-    print("[ERROR] %s" % err)
+    print("[WARN] No data. Try increasing the timeout or scan interval.")
 
 ## function for polling data from the target and triggering writing to log file if set
 #
@@ -251,7 +256,8 @@ while True:
     client.close()
 
   except Exception as err:
-    print ("[ERROR] %s" % err)
+    #Enable for debugging, otherwise it can be noisy and display false positives:
+    #print ("[ERROR] %s" % err)
     client.close()
     client.connect()
   time.sleep(config.scan_interval)

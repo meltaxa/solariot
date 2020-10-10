@@ -30,7 +30,9 @@ The Inverter must be accessible on the network using TCP.
 This script should work on most Inverters that talk Modbus TCP. You can 
 customise your own modbus register file.
 
-Install the required Python libraries for pymodbus, dweepy and influxdb:
+Run on Python 3.5+.
+
+Install the required Python libraries:
 
 ```
 pip install -r requirements.txt
@@ -51,7 +53,8 @@ register addresses Solariot should scan from.
 
 *[ERROR] 'ModbusIOException' object has no attribute 'registers'*
 Check your Inverter's "address" (as opposed to IP address) matches the slave 
-id in the config file. Default is 0x01.
+id in the config file. Default is 0x01. Also, try increasing the timeout or
+scan_interval in the config.py file to reduce the noise.
 
 ## Next Steps
 
@@ -80,8 +83,9 @@ This is a good way to push data to MQTT topics that you might subscribe various 
 such as Node-Red or Home Assistant to. Running your own MQTT server will mean you can
 also retrieve these values when your internet is offline.
 
-All you need to do is to set the `mqtt_server`, `mqtt_port` and `mqtt_topic` values in
-`config.py` file and you'll be up and running.
+All you need to do is to set the `mqtt_server`, `mqtt_port`, `mqtt_username`, 
+`mqtt_password` and `mqtt_topic` values in `config.py` file and you'll be up 
+and running.
 
 ### InfluxDB and Grafana
 

@@ -21,3 +21,5 @@ influxdb_verify_ssl = False
 mqtt_server = "192.168.1.128"
 mqtt_port = 1883
 mqtt_topic = "inverter/stats"
+mqtt_username = "user"
+mqtt_password = "password"
