@@ -23,6 +23,7 @@ A recent screenshot is shown below:
   --->
   <img src="https://mellican.com/images/solarspy-live.png?github" width=70%>
 </p>
+
 ## Pre-requisites
 
 The Inverter must be accessible on the network using TCP.
