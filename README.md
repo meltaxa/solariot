@@ -9,20 +9,20 @@ Currently, Solariot is able to talk to a SMA Sunny Boy and Sungrow SH5K inverter
 the script is designed to allow any Modbus TCP enabled Inverter to be queried by
 using your own Modbus register map file.
 
-Once the Inverter has been queried, data is collected and stream to two optional
-destinations: dweet.io and / or an InfluxDB. From there, you will need to create
-your own dashboard, such as Freeboard and Grafana. 
+Data is collected and can be streamed to destinations like dweet.io or InfluxDB. 
+Next, use a dashboard to display the metrics or set triggers to manage your appliances. 
 
-Here's an example use case with [Freeboard](https://freeboard.io/board/YQ35fW) as a real 
-time dashboard and data visualization tool for a Sungrow Inverter (and attached
-battery) system:
-
-![alt tag](docs/freeboard-dashboard-solar-example.png)
-
-With [Grafana](https://solar.mellican.com):
-
-![alt tag](docs/influxdb-grafana-example.png)
-
+For a dashboard example, see Meltaxa's Grafana dashboard on <a href="https://solarspy.live">solarspy.live</a>. 
+A recent screenshot is shown below:
+<p align="center">
+  <!--- 
+  Github will by default use it's Camo CDN to cache images (https://github.blog/2014-01-28-proxying-user-images/). 
+  To override this, on the origin web server add the header Cache-Control no-cache. Also if you are using 
+  Cloudflare set the Browser Cache TTL to respect existing headers. The solarspy-live.png image is a Puppeteer 
+  screenshot and updated every 5 minutes displaying the energy usage at Meltaxa's home.
+  --->
+  <img src="https://mellican.com/images/solarspy-live.png?github" width=70%>
+</p>
 ## Pre-requisites
 
 The Inverter must be accessible on the network using TCP.
@@ -99,6 +99,7 @@ either install your own Grafana server or use their free
 [Grafana hosted solution](https://grafana.com/cloud/grafana).
 
 A json export of solarspy.live Grafana dashboard is available under the grafana folder.
+The file will require editing to match your InfluxDb settings.
 
 ## Integration with PVOutput.org and Grafana
 
