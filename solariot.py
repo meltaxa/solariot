@@ -26,18 +26,26 @@ from pymodbus.client.sync import ModbusTcpClient
 from SungrowModbusTcpClient import SungrowModbusTcpClient
 from influxdb import InfluxDBClient
 import paho.mqtt.client as mqtt
-import config
 import dweepy
 import json
 import time
 import datetime
 import requests
 from threading import Thread
+import argparse
+from importlib import import_module
 
 MIN_SIGNED   = -2147483648
 MAX_UNSIGNED =  4294967295
 
 requests.packages.urllib3.disable_warnings() 
+
+# Load in the config module
+parser = argparse.ArgumentParser()
+parser.add_argument("-c", "--config", default="config", help="Python module to load as our config")
+args = parser.parse_args()
+
+config = import_module(args.config)
 
 print ("Load config %s" % config.model)
 
@@ -55,7 +63,7 @@ sma_moddatatype = {
 
 # Load the modbus register map for the inverter
 modmap_file = "modbus-" + config.model
-modmap = __import__(modmap_file)
+modmap = import_module(modmap_file)
 
 # This will try the Sungrow client otherwise will default to the standard library.
 if 'sungrow-' in config.model:
