@@ -84,7 +84,7 @@ if hasattr(config, "mqtt_server"):
     if hasattr(config, "mqtt_username") and hasattr(config, "mqtt_password"):
         mqtt_client.username_pw_set(config.mqtt_username, config.mqtt_password)
 
-    if config.mqtt_port == 8333:
+    if config.mqtt_port == 8883:
         mqtt_client.tls_set()
 
     mqtt_client.connect(config.mqtt_server, port=config.mqtt_port)
