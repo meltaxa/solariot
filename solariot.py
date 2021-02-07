@@ -85,13 +85,19 @@ print("Connect")
 client.connect()
 client.close()
 
-try: 
-  mqtt_client = mqtt.Client('pv_data')
-  if 'config.mqtt_username' in globals():
-      mqtt_client.username_pw_set(config.mqtt_username,config.mqtt_password)
-  mqtt_client.connect(config.mqtt_server, port=config.mqtt_port)
-except:
-  mqtt_client = None
+# Configure MQTT
+if hasattr(config, "mqtt_server"):
+    mqtt_client = mqtt.Client(getattr(config, "mqtt_client_name", "pv_data"))
+
+    if hasattr(config, "mqtt_username") and hasattr(config, "mqtt_password"):
+        mqtt_client.username_pw_set(config.mqtt_username, config.mqtt_password)
+
+    if config.mqtt_port == 8883:
+        mqtt_client.tls_set()
+
+    mqtt_client.connect(config.mqtt_server, port=config.mqtt_port)
+else:
+    mqtt_client = None
 
 try:
   flux_client = InfluxDBClient(config.influxdb_ip,
