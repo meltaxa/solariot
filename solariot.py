@@ -59,8 +59,11 @@ else:
 
 logging.basicConfig(level=log_level)
 
-config = import_module(args.config)
-logging.info(f"Loaded config {config.model}")
+try:
+    config = import_module(args.config)
+    logging.info(f"Loaded config {config.model}")
+except ModuleNotFoundError:
+    parser.error(f"Unable to locate {args.config}.py")
 
 # SMA datatypes and their register lengths
 # S = Signed Number, U = Unsigned Number, STR = String
