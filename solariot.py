@@ -163,19 +163,22 @@ def load_registers(register_type, start, count=100):
     except Exception as err:
         logging.warning("No data. Try increasing the timeout or scan interval.")
 
-    if len(rr.registers) != count:
-        logging.warning(f"Mismatched number of registers read {len(rr.registers)} != {count}")
-        return
+    try:
+        if len(rr.registers) != count:
+            logging.warning(f"Mismatched number of registers read {len(rr.registers)} != {count}")
+            return
+    except Exception:
+        pass
 
     for num in range(0, count):
         run = int(start) + num + 1
 
-        if type == "read" and modmap.read_register.get(str(run)):
+        if register_type == "read" and modmap.read_register.get(str(run)):
             if "_10" in modmap.read_register.get(str(run)):
                 inverter[modmap.read_register.get(str(run))[:-3]] = float(rr.registers[num]) / 10
             else:
                 inverter[modmap.read_register.get(str(run))] = rr.registers[num]
-        elif type == "holding" and modmap.holding_register.get(str(run)):
+        elif register_type == "holding" and modmap.holding_register.get(str(run)):
             inverter[modmap.holding_register.get(str(run))] = rr.registers[num]
 
 # Function for polling data from the target and triggering writing to log file if set
@@ -261,8 +264,6 @@ def scrape_inverter():
     """ Connect to the inverter and scrape the metrics """
     client.connect()
 
-    inverter = {}
-
     if "sungrow-" in config.model:
         for i in bus["read"]:
             load_registers("read", i["start"], int(i["range"]))
@@ -271,10 +272,15 @@ def scrape_inverter():
   
         # Sungrow inverter specifics:
         # Work out if the grid power is being imported or exported
-        if config.model == "sungrow-sh5k" and inverter["grid_import_or_export"] == 65535:
-            export_power = (65535 - inverter["export_power"]) * -1
-            inverter["export_power"] = export_power
+        if config.model == "sungrow-sh5k":
+            try:
+                if inverter["grid_import_or_export"] == 65535:
+                    export_power = (65535 - inverter["export_power"]) * -1
+                    inverter["export_power"] = export_power
+            except Exception:
+                pass
 
+        try:
             inverter["timestamp"] = "%s/%s/%s %s:%02d:%02d" % (
                 inverter["day"],
                 inverter["month"],
@@ -283,6 +289,8 @@ def scrape_inverter():
                 inverter["minute"],
                 inverter["second"],
             )
+        except Exception:
+            pass
     elif "sma-" in config.model:
         load_sma_register(modmap.sma_registers)
     else:
@@ -295,34 +303,29 @@ def scrape_inverter():
 
 
 while True:
-    try:
-        # Scrape the inverter
-        inverter = scrape_inverter()
+    # Scrape the inverter
+    inverter = scrape_inverter()
 
-        # Optionally publish the metrics if enabled
-        if mqtt_client is not None:
-            t = Thread(target=publish_mqtt, args=(inverter,))
-            t.start()
+    # Optionally publish the metrics if enabled
+    if mqtt_client is not None:
+        t = Thread(target=publish_mqtt, args=(inverter,))
+        t.start()
 
-        if hasattr(config, "dweepy_uuid"):
-            t = Thread(target=publish_dweepy, args=(inverter,))
-            t.start()
+    if hasattr(config, "dweepy_uuid"):
+        t = Thread(target=publish_dweepy, args=(inverter,))
+        t.start()
 
-        if flux_client is not None:
-            metrics = {
-                "measurement": "Sungrow",
-                "tags": {
-                    "location": "Gabba",
-                },
-                "fields": inverter,
-            }
+    if flux_client is not None:
+        metrics = {
+            "measurement": "Sungrow",
+            "tags": {
+                "location": "Gabba",
+            },
+            "fields": inverter,
+        }
 
-            t = Thread(target=publish_influx, args=(metrics,))
-            t.start()
-    except Exception as err:
-        # Enable for debugging, otherwise it can be noisy and display false positives
-        logging.debug(str(err))
-        client.close()
+        t = Thread(target=publish_influx, args=(metrics,))
+        t.start()
 
     # Sleep until the next scan
     time.sleep(config.scan_interval)
