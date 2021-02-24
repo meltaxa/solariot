@@ -48,6 +48,7 @@ requests.packages.urllib3.disable_warnings()
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", default="config", help="Python module to load as our config")
 parser.add_argument("-v", "--verbose", action="count", default=0, help="Level of verbosity 0=ERROR 1=INFO 2=DEBUG")
+parser.add_argument("--one-shot", action="store_true", help="Run solariot just once then exit, useful for cron based execution")
 args = parser.parse_args()
 
 if args.verbose == 0:
@@ -326,6 +327,10 @@ while True:
 
         t = Thread(target=publish_influx, args=(metrics,))
         t.start()
+
+    if args.one_shot:
+        logging.info("Exiting due to --one-shot")
+        break
 
     # Sleep until the next scan
     time.sleep(config.scan_interval)
