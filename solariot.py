@@ -140,6 +140,55 @@ else:
     flux_client = None
     logging.info("No InfluxDB configuration detected")
 
+# Configure PVOutput
+if hasattr(config, "pvoutput_api"):
+    class PVOutputPublisher(object):
+        def __init__(self, api_key, system_id, status_url="https://pvoutput.org/service/r2/addstatus.jsp"):
+            self.api_key = api_key
+            self.system_id = system_id
+            self.status_url = status_url
+
+        @property
+        def headers(self):
+            return {
+                "X-Pvoutput-Apikey": self.api_key,
+                "X-Pvoutput-SystemId": self.system_id,
+                "Content-Type": "application/x-www-form-urlencoded",
+                "cache-control": "no-cache",
+            }
+
+        def publish_status(metrics):
+            """
+            See https://pvoutput.org/help.html#api
+            Post the following values:
+            * v2 - Power Generation
+            * v4 - Power Consumption
+            * v6 - Voltage (we post Grid voltage)
+            """
+            now = datetime.datetime.now()
+
+            parameters = {
+                "d": now.strftime("%Y%m%d"),
+                "t": now.strftime("%H:%M"),
+                "v2": metrics["total_pv_power"],
+                "v4": metrics["power_meter"],
+                "v6": metrics["grid_voltage"],
+            }
+
+            response = requests.request("POST", url=self.status_url, headers=self.headers, params=parameters)
+
+            if response.status_code != requests.codes.ok:
+                raise RuntimeError(response.text)
+            else:
+                logging.info("Successfully posted status update to PVOutput")
+
+    pvoutput_client = PVOutputPublisher(config.pvoutput_api, config.pvoutput_sid)
+
+    logging.info("Configured PVOutput Client")
+else:
+    pvoutput_client = None
+    logging.info("No PVOutput configuration detected")
+
 # Inverter Scanning
 inverter = {}
 bus = json.loads(modmap.scan)
@@ -259,6 +308,11 @@ def publish_mqtt(inverter):
     logging.info("Published to MQTT")
     return result
 
+def publish_pvoutput(inverter):
+    result = pvoutput_client.publish_status(inverter)
+    logging.info("Published to PVOutput")
+    return result
+
 # Core monitoring loop
 def scrape_inverter():
     """ Connect to the inverter and scrape the metrics """
@@ -325,6 +379,10 @@ while True:
         }
 
         t = Thread(target=publish_influx, args=(metrics,))
+        t.start()
+
+    if pvoutput_client is not None:
+        t = Thread(target=publish_pvoutput, args=(inverter,))
         t.start()
 
     # Sleep until the next scan

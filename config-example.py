@@ -24,3 +24,7 @@ influxdb_verify_ssl = False
 #mqtt_topic = "inverter/stats"
 #mqtt_username = "user"
 #mqtt_password = "password"
+
+# Optional
+#pvoutput_api = "api_key"
+#pvoutput_sid = "system_id"
