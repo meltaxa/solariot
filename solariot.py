@@ -232,6 +232,7 @@ def load_registers(register_type, start, count=100):
             raise RuntimeError(f"Unsupported register type: {type}")
     except Exception as err:
         logging.warning("No data. Try increasing the timeout or scan interval.")
+        return False
 
     if rr.isError():
         logging.warning("Modbus connection failed")
