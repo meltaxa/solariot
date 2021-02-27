@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2017 Dennis Mellican
 #
@@ -37,6 +37,7 @@ import dweepy
 import json
 import time
 import sys
+import re
 
 
 MIN_SIGNED   = -2147483648
@@ -157,12 +158,15 @@ if hasattr(config, "pvoutput_api"):
                 "cache-control": "no-cache",
             }
 
-        def publish_status(metrics):
+        def publish_status(self, metrics):
             """
-            See https://pvoutput.org/help.html#api
+            See https://pvoutput.org/help.html#api-addstatus
             Post the following values:
+            * v1 - Daily Power Generation
             * v2 - Power Generation
+            * v3 - Daily Energy Consumption
             * v4 - Power Consumption
+            * v5 - Inverter Temperature
             * v6 - Voltage (we post Grid voltage)
             """
             now = datetime.datetime.now()
@@ -170,10 +174,26 @@ if hasattr(config, "pvoutput_api"):
             parameters = {
                 "d": now.strftime("%Y%m%d"),
                 "t": now.strftime("%H:%M"),
-                "v2": metrics["total_pv_power"],
-                "v4": metrics["power_meter"],
-                "v6": metrics["grid_voltage"],
+                "c1": 1,
             }
+
+            if "daily_power_yield" in metrics:
+                parameters["v1"] = metrics["daily_power_yield"]
+
+            if "total_active_power" in metrics:
+                parameters["v2"] = metrics["total_active_power"]
+
+            if "daily_energy_consumption" in metrics:
+                parameters["v3"] = metrics["daily_energy_consumption"]
+
+            if "power_meter" in metrics:
+                parameters["v4"] = metrics["power_meter"]
+
+            if "internal_temp" in metrics:
+                parameters["v5"] = metrics["internal_temp"]
+
+            if "grid_voltage" in metrics:
+                parameters["v6"] = metrics["grid_voltage"]
 
             response = requests.request("POST", url=self.status_url, headers=self.headers, params=parameters)
 
@@ -212,23 +232,32 @@ def load_registers(register_type, start, count=100):
     except Exception as err:
         logging.warning("No data. Try increasing the timeout or scan interval.")
 
-    try:
-        if len(rr.registers) != count:
-            logging.warning(f"Mismatched number of registers read {len(rr.registers)} != {count}")
-            return
-    except Exception:
-        pass
+    if rr.isError():
+        logging.warning("Modbus connection failed")
+        return False
+
+    if len(rr.registers) != count:
+        logging.warning(f"Mismatched number of registers read {len(rr.registers)} != {count}")
+        return
+
+    divide_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_]+)_(?P<divide_by>[0-9\.]+)$")
 
     for num in range(0, count):
         run = int(start) + num + 1
 
         if register_type == "read" and modmap.read_register.get(str(run)):
-            if "_10" in modmap.read_register.get(str(run)):
-                inverter[modmap.read_register.get(str(run))[:-3]] = float(rr.registers[num]) / 10
+            # Check if the modbus map has an '_10' or '_100' etc on the end
+            # If so, we divide by that and drop it from the name
+            should_divide = divide_regex.match(modmap.read_register.get(str(run)))
+
+            if should_divide:
+                inverter[should_divide["register_name"]] = float(rr.registers[num]) / float(should_divide["divide_by"])
             else:
                 inverter[modmap.read_register.get(str(run))] = rr.registers[num]
         elif register_type == "holding" and modmap.holding_register.get(str(run)):
             inverter[modmap.holding_register.get(str(run))] = rr.registers[num]
+
+    return True
 
 # Function for polling data from the target and triggering writing to log file if set
 def load_sma_register(registers):
@@ -320,9 +349,12 @@ def scrape_inverter():
 
     if "sungrow-" in config.model:
         for i in bus["read"]:
-            load_registers("read", i["start"], int(i["range"]))
+            if not load_registers("read", i["start"], int(i["range"])):
+                return False
+
         for i in bus["holding"]:
-            load_registers("holding", i["start"], int(i["range"]))
+            if not load_registers("holding", i["start"], int(i["range"])):
+                return False
   
         # Sungrow inverter specifics:
         # Work out if the grid power is being imported or exported
@@ -353,12 +385,16 @@ def scrape_inverter():
     client.close()
 
     logging.info(inverter)
-    return inverter
-
+    return True
 
 while True:
     # Scrape the inverter
-    inverter = scrape_inverter()
+    success = scrape_inverter()
+
+    if not success:
+        logging.warning("Failed to scrape inverter, sleeping until next scan")
+        time.sleep(config.scan_interval)
+        continue
 
     # Optionally publish the metrics if enabled
     if mqtt_client is not None:
