@@ -102,6 +102,14 @@ either install your own Grafana server or use their free
 A json export of solarspy.live Grafana dashboard is available under the grafana folder.
 The file will require editing to match your InfluxDb settings.
 
+### PVOutput.org
+
+We offer direct integration to publishing metrics to the 'Add Status' [API endpoint](https://pvoutput.org/help.html#api-addstatus) of PVOutput.
+
+Supported values are `v1` through to `v6` and an assumption that `v1` and `v3` are values are incremental and reset every day.
+
+All you need to do is set the `pvoutput_api` and `pvoutput_sid` values in `config.py` file and you'll be publishing in no time!
+
 ## Integration with PVOutput.org and Grafana
 
 If you are using Grafana as your dashboard, a neat little trick is to then
