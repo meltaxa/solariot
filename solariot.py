@@ -170,6 +170,8 @@ if hasattr(config, "pvoutput_api"):
             * v5 - Inverter Temperature
             * v6 - Voltage (we post Grid voltage)
             """
+            at_least_one_of = set(["v1", "v2", "v3", "v4"])
+
             now = datetime.datetime.now()
 
             parameters = {
@@ -195,6 +197,9 @@ if hasattr(config, "pvoutput_api"):
 
             if "grid_voltage" in metrics:
                 parameters["v6"] = metrics["grid_voltage"]
+
+            if not at_least_one_of.intersection(parameters.keys()):
+                raise RuntimeError("Metrics => PVOutput mapping failed, please review metric names and update")
 
             response = requests.request("POST", url=self.status_url, headers=self.headers, params=parameters)
 
