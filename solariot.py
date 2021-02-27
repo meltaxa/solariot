@@ -201,7 +201,7 @@ if hasattr(config, "pvoutput_api"):
             if response.status_code != requests.codes.ok:
                 raise RuntimeError(response.text)
             else:
-                logging.info("Successfully posted status update to PVOutput")
+                logging.debug("Successfully posted status update to PVOutput")
 
     pvoutput_client = PVOutputPublisher(config.pvoutput_api, config.pvoutput_sid)
 
