@@ -340,8 +340,17 @@ def publish_dweepy(inverter):
     return result
 
 def publish_mqtt(inverter):
+    # After a while you'll need to reconnect, so just reconnect before each publish
+    mqtt_client.reconnect()
+
     result = mqtt_client.publish(config.mqtt_topic, json.dumps(inverter).replace('"', '\"'))
-    logging.info("Published to MQTT")
+    result.wait_for_publish()
+
+    if result.rc != mqtt.MQTT_ERR_SUCCESS:
+        logging.error(f"Failed to publish to MQTT with error code: {result.rc}")
+    else:
+        logging.info("Published to MQTT")
+
     return result
 
 def publish_pvoutput(inverter):
