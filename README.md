@@ -5,15 +5,12 @@ data to a real time dashboard.
 
 Solariot will connect directly to your Inverter using Modbus TCP. 
 
-Currently, Solariot is able to talk to a SMA Sunny Boy and Sungrow SH5K inverter. However,
-the script is designed to allow any Modbus TCP enabled Inverter to be queried by
-using your own Modbus register map file.
+Currently, Solariot is able to talk to a SMA Sunny Boy and Sungrow SH5K & SG5KD inverters.
+Solariot is designed to allow any Modbus TCP enabled inverter to be queried using a Modbus register map.
 
-Data is collected and can be streamed to destinations like dweet.io or InfluxDB. 
-Next, use a dashboard to display the metrics or set triggers to manage your appliances. 
-
-For a dashboard example, see Meltaxa's Grafana dashboard on <a href="https://solarspy.live">solarspy.live</a>. 
-A recent screenshot is shown below:
+Data is collected and can be streamed to destinations like dweet.io, MQTT, InfluxDB or PVOutput.
+To visual the telemetry, use a dashboard such as Grafana. For example, this is Meltaxa's Grafana dashboard on
+<a href="https://solarspy.live">solarspy.live</a>:
 <p align="center">
   <!--- 
   Github will by default use it's Camo CDN to cache images (https://github.blog/2014-01-28-proxying-user-images/). 
@@ -108,7 +105,8 @@ We offer direct integration to publishing metrics to the 'Add Status' [API endpo
 
 Supported values are `v1` through to `v6` and an assumption that `v1` and `v3` are values are incremental and reset every day.
 
-All you need to do is set the `pvoutput_api` and `pvoutput_sid` values in `config.py` file and you'll be publishing in no time!
+All you need to do is set the `pvoutput_api` and `pvoutput_sid` and `pvoutput_rate_limit` values in `config.py` file and
+you'll be publishing in no time!
 
 ## Integration with PVOutput.org and Grafana
 

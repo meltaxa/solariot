@@ -145,10 +145,14 @@ else:
 # Configure PVOutput
 if hasattr(config, "pvoutput_api"):
     class PVOutputPublisher(object):
-        def __init__(self, api_key, system_id, status_url="https://pvoutput.org/service/r2/addstatus.jsp"):
+        def __init__(self, api_key, system_id, metric_mappings, rate_limit=60, status_url="https://pvoutput.org/service/r2/addstatus.jsp"):
             self.api_key = api_key
             self.system_id = system_id
             self.status_url = status_url
+            self.metric_mappings = metric_mappings
+            self.rate_limit = rate_limit
+
+            self.latest_run = None
 
         @property
         def headers(self):
@@ -163,16 +167,23 @@ if hasattr(config, "pvoutput_api"):
             """
             See https://pvoutput.org/help.html#api-addstatus
             Post the following values:
-            * v1 - Daily Power Generation
+            * v1 - Energy Generation
             * v2 - Power Generation
-            * v3 - Daily Energy Consumption
+            * v3 - Energy Consumption
             * v4 - Power Consumption
-            * v5 - Inverter Temperature
-            * v6 - Voltage (we post Grid voltage)
+            * v5 - Temperature
+            * v6 - Voltage
             """
             at_least_one_of = set(["v1", "v2", "v3", "v4"])
 
             now = datetime.datetime.now()
+
+            if self.latest_run:
+                # Spread out our publishes over the hour based on the rate limit
+                time_diff = (now - self.latest_run).total_seconds()
+
+                if time_diff < (3600 / self.rate_limit):
+                    return "skipped"
 
             parameters = {
                 "d": now.strftime("%Y%m%d"),
@@ -180,35 +191,41 @@ if hasattr(config, "pvoutput_api"):
                 "c1": 1,
             }
 
-            if "daily_power_yield" in metrics:
-                parameters["v1"] = metrics["daily_power_yield"]
+            if self.metric_mappings.get("Energy Generation") in metrics:
+                parameters["v1"] = metrics[self.metric_mappings.get("Energy Generation")]
 
-            if "total_active_power" in metrics:
-                parameters["v2"] = metrics["total_active_power"]
+            if self.metric_mappings.get("Power Generation") in metrics:
+                parameters["v2"] = metrics[self.metric_mappings.get("Power Generation")]
 
-            if "daily_energy_consumption" in metrics:
-                parameters["v3"] = metrics["daily_energy_consumption"]
+            if self.metric_mappings.get("Energy Consumption") in metrics:
+                parameters["v3"] = metrics[self.metric_mappings.get("Energy Consumption")]
 
-            if "power_meter" in metrics:
-                parameters["v4"] = metrics["power_meter"]
+            if self.metric_mappings.get("Power Consumption") in metrics:
+                parameters["v4"] = metrics[self.metric_mappings.get("Power Consumption")]
 
-            if "internal_temp" in metrics:
-                parameters["v5"] = metrics["internal_temp"]
+            if self.metric_mappings.get("Temperature") in metrics:
+                parameters["v5"] = metrics[self.metric_mappings.get("Temperature")]
 
-            if "grid_voltage" in metrics:
-                parameters["v6"] = metrics["grid_voltage"]
+            if self.metric_mappings.get("Voltage") in metrics:
+                parameters["v6"] = metrics[self.metric_mappings.get("Voltage")]
 
             if not at_least_one_of.intersection(parameters.keys()):
                 raise RuntimeError("Metrics => PVOutput mapping failed, please review metric names and update")
 
-            response = requests.request("POST", url=self.status_url, headers=self.headers, params=parameters)
+            response = requests.post(url=self.status_url, headers=self.headers, params=parameters)
 
             if response.status_code != requests.codes.ok:
                 raise RuntimeError(response.text)
-            else:
-                logging.debug("Successfully posted status update to PVOutput")
 
-    pvoutput_client = PVOutputPublisher(config.pvoutput_api, config.pvoutput_sid)
+            logging.debug("Successfully posted status update to PVOutput")
+            self.latest_run = now
+
+    pvoutput_client = PVOutputPublisher(
+        config.pvoutput_api,
+        config.pvoutput_sid,
+        modmap.pvoutput,
+        rate_limit=config.pvoutput_rate_limit,
+    )
 
     logging.info("Configured PVOutput Client")
 else:
@@ -356,7 +373,11 @@ def publish_mqtt(inverter):
 
 def publish_pvoutput(inverter):
     result = pvoutput_client.publish_status(inverter)
-    logging.info("Published to PVOutput")
+
+    if result == "skipped":
+        logging.info("Skipping PVOutput to stay under the rate limit")
+    else:
+        logging.info("Published to PVOutput")
     return result
 
 # Core monitoring loop

@@ -91,3 +91,14 @@ scan = """{
      }
   ]
 }"""
+
+# Match Modbus registers to pvoutput api fields
+# Reference: https://pvoutput.org/help.html#api-addstatus
+pvoutput = {
+  "Energy Generation": "daily_pv_energy",
+  "Power Generation": "total_pv_power",
+  "Energy Consumption": "daily_use_energy",
+  "Power Consumption": "load_power",
+  "Temperature": "internal_temp",
+  "Voltage": "grid_voltage"
+}
