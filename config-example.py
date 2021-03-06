@@ -24,3 +24,9 @@ influxdb_verify_ssl = False
 #mqtt_topic = "inverter/stats"
 #mqtt_username = "user"
 #mqtt_password = "password"
+
+# Optional
+#pvoutput_api = "api_key"
+#pvoutput_sid = "system_id"
+# 12 for regular accounts, 60 for donation accounts
+#pvoutput_rate_limit = 60

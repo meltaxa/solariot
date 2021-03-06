@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2017 Dennis Mellican
 #
@@ -37,6 +37,7 @@ import dweepy
 import json
 import time
 import sys
+import re
 
 
 MIN_SIGNED   = -2147483648
@@ -141,6 +142,96 @@ else:
     flux_client = None
     logging.info("No InfluxDB configuration detected")
 
+# Configure PVOutput
+if hasattr(config, "pvoutput_api"):
+    class PVOutputPublisher(object):
+        def __init__(self, api_key, system_id, metric_mappings, rate_limit=60, status_url="https://pvoutput.org/service/r2/addstatus.jsp"):
+            self.api_key = api_key
+            self.system_id = system_id
+            self.status_url = status_url
+            self.metric_mappings = metric_mappings
+            self.rate_limit = rate_limit
+
+            self.latest_run = None
+
+        @property
+        def headers(self):
+            return {
+                "X-Pvoutput-Apikey": self.api_key,
+                "X-Pvoutput-SystemId": self.system_id,
+                "Content-Type": "application/x-www-form-urlencoded",
+                "cache-control": "no-cache",
+            }
+
+        def publish_status(self, metrics):
+            """
+            See https://pvoutput.org/help.html#api-addstatus
+            Post the following values:
+            * v1 - Energy Generation
+            * v2 - Power Generation
+            * v3 - Energy Consumption
+            * v4 - Power Consumption
+            * v5 - Temperature
+            * v6 - Voltage
+            """
+            at_least_one_of = set(["v1", "v2", "v3", "v4"])
+
+            now = datetime.datetime.now()
+
+            if self.latest_run:
+                # Spread out our publishes over the hour based on the rate limit
+                time_diff = (now - self.latest_run).total_seconds()
+
+                if time_diff < (3600 / self.rate_limit):
+                    return "skipped"
+
+            parameters = {
+                "d": now.strftime("%Y%m%d"),
+                "t": now.strftime("%H:%M"),
+                "c1": 1,
+            }
+
+            if self.metric_mappings.get("Energy Generation") in metrics:
+                parameters["v1"] = metrics[self.metric_mappings.get("Energy Generation")]
+
+            if self.metric_mappings.get("Power Generation") in metrics:
+                parameters["v2"] = metrics[self.metric_mappings.get("Power Generation")]
+
+            if self.metric_mappings.get("Energy Consumption") in metrics:
+                parameters["v3"] = metrics[self.metric_mappings.get("Energy Consumption")]
+
+            if self.metric_mappings.get("Power Consumption") in metrics:
+                parameters["v4"] = metrics[self.metric_mappings.get("Power Consumption")]
+
+            if self.metric_mappings.get("Temperature") in metrics:
+                parameters["v5"] = metrics[self.metric_mappings.get("Temperature")]
+
+            if self.metric_mappings.get("Voltage") in metrics:
+                parameters["v6"] = metrics[self.metric_mappings.get("Voltage")]
+
+            if not at_least_one_of.intersection(parameters.keys()):
+                raise RuntimeError("Metrics => PVOutput mapping failed, please review metric names and update")
+
+            response = requests.post(url=self.status_url, headers=self.headers, params=parameters)
+
+            if response.status_code != requests.codes.ok:
+                raise RuntimeError(response.text)
+
+            logging.debug("Successfully posted status update to PVOutput")
+            self.latest_run = now
+
+    pvoutput_client = PVOutputPublisher(
+        config.pvoutput_api,
+        config.pvoutput_sid,
+        modmap.pvoutput,
+        rate_limit=config.pvoutput_rate_limit,
+    )
+
+    logging.info("Configured PVOutput Client")
+else:
+    pvoutput_client = None
+    logging.info("No PVOutput configuration detected")
+
 # Inverter Scanning
 inverter = {}
 bus = json.loads(modmap.scan)
@@ -163,24 +254,34 @@ def load_registers(register_type, start, count=100):
             raise RuntimeError(f"Unsupported register type: {type}")
     except Exception as err:
         logging.warning("No data. Try increasing the timeout or scan interval.")
+        return False
 
-    try:
-        if len(rr.registers) != count:
-            logging.warning(f"Mismatched number of registers read {len(rr.registers)} != {count}")
-            return
-    except Exception:
-        pass
+    if rr.isError():
+        logging.warning("Modbus connection failed")
+        return False
+
+    if len(rr.registers) != count:
+        logging.warning(f"Mismatched number of registers read {len(rr.registers)} != {count}")
+        return
+
+    divide_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_]+)_(?P<divide_by>[0-9\.]+)$")
 
     for num in range(0, count):
         run = int(start) + num + 1
 
         if register_type == "read" and modmap.read_register.get(str(run)):
-            if "_10" in modmap.read_register.get(str(run)):
-                inverter[modmap.read_register.get(str(run))[:-3]] = float(rr.registers[num]) / 10
+            # Check if the modbus map has an '_10' or '_100' etc on the end
+            # If so, we divide by that and drop it from the name
+            should_divide = divide_regex.match(modmap.read_register.get(str(run)))
+
+            if should_divide:
+                inverter[should_divide["register_name"]] = float(rr.registers[num]) / float(should_divide["divide_by"])
             else:
                 inverter[modmap.read_register.get(str(run))] = rr.registers[num]
         elif register_type == "holding" and modmap.holding_register.get(str(run)):
             inverter[modmap.holding_register.get(str(run))] = rr.registers[num]
+
+    return True
 
 # Function for polling data from the target and triggering writing to log file if set
 def load_sma_register(registers):
@@ -256,8 +357,27 @@ def publish_dweepy(inverter):
     return result
 
 def publish_mqtt(inverter):
+    # After a while you'll need to reconnect, so just reconnect before each publish
+    mqtt_client.reconnect()
+
     result = mqtt_client.publish(config.mqtt_topic, json.dumps(inverter).replace('"', '\"'))
-    logging.info("Published to MQTT")
+    result.wait_for_publish()
+
+    if result.rc != mqtt.MQTT_ERR_SUCCESS:
+        # See https://github.com/eclipse/paho.mqtt.python/blob/master/src/paho/mqtt/client.py#L149 for error code mapping
+        logging.error(f"Failed to publish to MQTT with error code: {result.rc}")
+    else:
+        logging.info("Published to MQTT")
+
+    return result
+
+def publish_pvoutput(inverter):
+    result = pvoutput_client.publish_status(inverter)
+
+    if result == "skipped":
+        logging.info("Skipping PVOutput to stay under the rate limit")
+    else:
+        logging.info("Published to PVOutput")
     return result
 
 # Core monitoring loop
@@ -267,9 +387,12 @@ def scrape_inverter():
 
     if "sungrow-" in config.model:
         for i in bus["read"]:
-            load_registers("read", i["start"], int(i["range"]))
+            if not load_registers("read", i["start"], int(i["range"])):
+                return False
+
         for i in bus["holding"]:
-            load_registers("holding", i["start"], int(i["range"]))
+            if not load_registers("holding", i["start"], int(i["range"])):
+                return False
   
         # Sungrow inverter specifics:
         # Work out if the grid power is being imported or exported
@@ -300,12 +423,16 @@ def scrape_inverter():
     client.close()
 
     logging.info(inverter)
-    return inverter
-
+    return True
 
 while True:
     # Scrape the inverter
-    inverter = scrape_inverter()
+    success = scrape_inverter()
+
+    if not success:
+        logging.warning("Failed to scrape inverter, sleeping until next scan")
+        time.sleep(config.scan_interval)
+        continue
 
     # Optionally publish the metrics if enabled
     if mqtt_client is not None:
@@ -326,6 +453,10 @@ while True:
         }
 
         t = Thread(target=publish_influx, args=(metrics,))
+        t.start()
+
+    if pvoutput_client is not None:
+        t = Thread(target=publish_pvoutput, args=(inverter,))
         t.start()
 
     if args.one_shot:
