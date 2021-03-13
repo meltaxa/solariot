@@ -7,8 +7,10 @@ slave = 0x01
 model = "sungrow-sh5k"
 timeout = 3
 scan_interval = 10
+
 # Optional:
 dweepy_uuid = "random-uuid"
+
 # Optional:
 influxdb_ip = "192.168.1.128"
 influxdb_port = 8086
@@ -28,5 +30,8 @@ influxdb_verify_ssl = False
 # Optional
 #pvoutput_api = "api_key"
 #pvoutput_sid = "system_id"
-# 12 for regular accounts, 60 for donation accounts
+# 60 for regular accounts, 300 for donation accounts
 #pvoutput_rate_limit = 60
+
+# Optional: save telemetry to a json file
+#json_file = "telemetry.json"
