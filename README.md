@@ -9,7 +9,7 @@ Currently, Solariot is able to talk to a SMA Sunny Boy and Sungrow SH5K & SG5KD 
 Solariot is designed to allow any Modbus TCP enabled inverter to be queried using a Modbus register map.
 
 Data is collected and can be streamed to destinations like dweet.io, MQTT, InfluxDB or PVOutput. 
-To visual the telemetry, use a dashboard such as Grafana. For example, this is Meltaxa's Grafana dashboard on 
+To visualise the telemetry, use a dashboard such as Grafana. For example, this is Meltaxa's Grafana dashboard on 
 <a href="https://solarspy.live">solarspy.live</a>:
 <p align="center">
   <!--- 
@@ -56,7 +56,7 @@ PVOutput, InfluxDB and more.
     ```
     -c             Python module to load as our config. Default is config.py.
     -v             Level of verbosity 0=ERROR 1=INFO 2=DEBUG.
-    --one-shot     Run solariot just once then exit.
+    --one-shot     Run Solariot just once then exit.
     ```
 ## Docker
 
@@ -72,9 +72,8 @@ PVOutput, InfluxDB and more.
 Now that you are collecting the inverter's data, you'll want to ultimately
 display it in a dashboard as seen above. 
 
-There are many methods to stream the data. Here are a couple options, which
-both can be enabled in Solariot. Let me know if you have other methods, such
-as MQTT as the pub/sub service or another IoT Time Series database.
+There are many methods to stream the data. Here are a few options, which
+can be enabled in Solariot. 
 
 ### Dweet.io and Freeboard
 

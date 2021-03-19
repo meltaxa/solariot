@@ -260,6 +260,10 @@ def load_registers(register_type, start, count=100):
         logging.warning("Modbus connection failed")
         return False
 
+    if not hasattr(rr, 'registers'):
+        logging.warning("No registers returned")
+        return
+
     if len(rr.registers) != count:
         logging.warning(f"Mismatched number of registers read {len(rr.registers)} != {count}")
         return
