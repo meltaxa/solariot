@@ -84,7 +84,7 @@ Metrics are streamed to dweet.io a free IoT messaging service. No sign up is
 required. All you need to do is create a unique identifier by updating the
 dweepy_uuid value in the config.py file.
 
-Data can then be visualised using a free dashboard service from 
+Data can then be visualised using a ~~free~~ low-cost dashboard service from 
 [Freeboard](https://freeboard.io/). You'll need to create your own dashboard,
 using dweet.io as your data source.
 
