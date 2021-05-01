@@ -2,7 +2,4 @@ paho-mqtt>=1.5.1
 pymodbus>=2.5.1
 dweepy>=0.3.0
 influxdb>=5.3.1
-python_dateutil>=2.6.1
-pytz>=2021.1
-pycrypto>=2.6.1
 SungrowModbusTcpClient>=0.1.5
