@@ -40,7 +40,7 @@ customise your own modbus register file.
    
 2. Install the required libraries.
     ```
-    pip install -r requirements.txt
+    pip install --upgrade -r requirements.txt
     ```
    
 3. Update the config.py with your values, such as the Inverter's IP address, 
