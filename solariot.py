@@ -460,7 +460,7 @@ def scrape_inverter():
 
     client.close()
 
-    logging.info(json.dumps(inverter, indent=4, sort_keys=True))
+    logging.info(inverter)
     return True
 
 while True:
