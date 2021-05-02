@@ -12,9 +12,11 @@ read_register = {
   "5031": "total_active_power",     # W
   "5036": "grid_frequency_10",      # Hz
 
-  "5091": "power_meter",               # W - House Consumption
-  "5097": "daily_purchased_energy_10", # kW
+  "5083": "export_power_overflow",  # W - House Grid Consumption (+ = importing, - = exporting)
+  "5084": "export_power_indicator", # W - House Grid Consumption Overflow Indicator
+  "5091": "power_meter",            # W - House Overall Consumption
 
+  "5097": "daily_purchased_energy_10", # kW
   "5101": "daily_energy_consumption_0.01", # Wh
   "5103": "total_energy_consumption_10",   # kWh
 }

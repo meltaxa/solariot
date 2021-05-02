@@ -264,22 +264,60 @@ def load_registers(register_type, start, count=100):
         logging.warning(f"Mismatched number of registers read {len(rr.registers)} != {count}")
         return
 
+    overflow_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_\.]+)_overflow$")
+    indicator_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_\.]+)_indicator$")
     divide_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_]+)_(?P<divide_by>[0-9\.]+)$")
 
     for num in range(0, count):
         run = int(start) + num + 1
 
         if register_type == "read" and modmap.read_register.get(str(run)):
+            register_name = modmap.read_register.get(str(run))
+            register_value = rr.registers[num]
+
+            # Check if the modbus map has an '_overflow' on the end
+            # If so the value 'could' be negative (65535 - x) where (-x) is the actual number
+            # So a value of '64486' actually represents '-1049'
+            # We rely on a second '_indicator' register to tell is if it's actually negative or not, otherwise it's ambigious!
+            should_overflow = overflow_regex.match(register_name)
+
+            if should_overflow:
+                register_name = should_overflow["register_name"]
+
+                # Find the indicator register value
+                indicator_name = f"{register_name}_indicator"
+
+                for reg_num, reg_name in modmap.read_register.items():
+                    if reg_name == indicator_name:
+                        indicator_register = int(reg_num)
+                        break
+                else:
+                    indicator_register = None
+
+                if indicator_register is not None:
+                    # Given register '5084' and knowing start of '5000' we can assume the index
+                    # Of our indicator value is 5084 - 5000 - 1 (because of the 'off by 1')
+                    indicator_value = rr.registers[indicator_register - int(start) - 1]
+
+                    if indicator_value == 65535:
+                        # We are in overflow
+                        register_value = -1 * (65535 - register_value)
+
             # Check if the modbus map has an '_10' or '_100' etc on the end
             # If so, we divide by that and drop it from the name
-            should_divide = divide_regex.match(modmap.read_register.get(str(run)))
+            should_divide = divide_regex.match(register_name)
 
             if should_divide:
-                inverter[should_divide["register_name"]] = float(rr.registers[num]) / float(should_divide["divide_by"])
-            else:
-                inverter[modmap.read_register.get(str(run))] = rr.registers[num]
+                register_name = should_divide["register_name"]
+                register_value = float(register_value) / float(should_divide["divide_by"])
+
+            # Set the final register name and value, any adjustments above included
+            inverter[register_name] = register_value
         elif register_type == "holding" and modmap.holding_register.get(str(run)):
-            inverter[modmap.holding_register.get(str(run))] = rr.registers[num]
+            register_name = modmap.holding_register.get(str(run))
+            register_value = rr.registers[num]
+
+            inverter[register_name] = register_value
 
     return True
 
@@ -380,16 +418,6 @@ def publish_pvoutput(inverter):
         logging.info("Published to PVOutput")
     return result
 
-def save_json(inverter):
-    try:
-        f = open(config.json_file,'w')
-        f.write(json.dumps(inverter))
-        f.close()
-    except Exception as err:
-        logging.error("Error writing telemetry to file: %s" % err)
-        return
-    logging.info("Inverter telemetry written to %s file." % config.json_file)
-
 # Core monitoring loop
 def scrape_inverter():
     """ Connect to the inverter and scrape the metrics """
@@ -432,7 +460,7 @@ def scrape_inverter():
 
     client.close()
 
-    logging.info(inverter)
+    logging.info(json.dumps(inverter, indent=4, sort_keys=True))
     return True
 
 while True:
@@ -467,10 +495,6 @@ while True:
 
     if pvoutput_client is not None:
         t = Thread(target=publish_pvoutput, args=(inverter,))
-        t.start()
-
-    if hasattr(config, "json_file"):
-        t = Thread(target=save_json, args=(inverter,))
         t.start()
 
     if args.one_shot:
