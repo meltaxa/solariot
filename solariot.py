@@ -265,7 +265,6 @@ def load_registers(register_type, start, count=100):
         return
 
     overflow_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_\.]+)_overflow$")
-    indicator_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_\.]+)_indicator$")
     divide_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_]+)_(?P<divide_by>[0-9\.]+)$")
 
     for num in range(0, count):
