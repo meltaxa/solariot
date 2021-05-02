@@ -417,6 +417,16 @@ def publish_pvoutput(inverter):
         logging.info("Published to PVOutput")
     return result
 
+def save_json(inverter):
+    try:
+        f = open(config.json_file,'w')
+        f.write(json.dumps(inverter))
+        f.close()
+    except Exception as err:
+        logging.error("Error writing telemetry to file: %s" % err)
+        return
+    logging.info("Inverter telemetry written to %s file." % config.json_file)
+
 # Core monitoring loop
 def scrape_inverter():
     """ Connect to the inverter and scrape the metrics """
@@ -494,6 +504,10 @@ while True:
 
     if pvoutput_client is not None:
         t = Thread(target=publish_pvoutput, args=(inverter,))
+        t.start()
+
+    if hasattr(config, "json_file"):
+        t = Thread(target=save_json, args=(inverter,))
         t.start()
 
     if args.one_shot:
