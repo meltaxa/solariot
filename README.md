@@ -149,5 +149,6 @@ file as a pull request for Solariot inclusion.
 
 * [michael-robbins](https://github.com/michael-robbins) for Docker support, modbus contrib and other improvements.
 * [rpvelloso](https://github.com/rpvelloso) for the SungrowModbusTcpClient class that enables decryption of comms.
+* [shannonpasto](https://github.com/shannonpasto) for the Sungrow SG3KD modbus map.
 * [ShogunQld](https://github.com/ShogunQld) for the SMA Sunnuyboy modbus map.
 * [zyrorl](https://github.com/zyrorl) for MQTT support contrib.
