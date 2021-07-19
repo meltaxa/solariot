@@ -9,12 +9,12 @@ read_register = {
   "5013": "pv2_voltage_10",         # V
   "5014": "pv2_current_10",         # A
   "5017": "total_pv_power",         # W
-  "5019": "grid_voltage_a_10",      # V new name
-  "5020": "grid_voltage_b_10",		# V new line
-  "5021": "grid_voltage_c_10",		# V new line
-  "5022": "inverter_current_a_10",  # A new name
-  "5023": "inverter_current_b_10",  # A new line
-  "5024": "inverter_current_c_10",  # A new line
+  "5019": "grid_voltage_a_10",      # V
+  "5020": "grid_voltage_b_10",		  # V
+  "5021": "grid_voltage_c_10",		  # V
+  "5022": "inverter_current_a_10",  # A
+  "5023": "inverter_current_b_10",  # A
+  "5024": "inverter_current_c_10",  # A
   "5031": "total_active_power",     # W
   "5036": "grid_frequency_10",      # Hz
   "5071": "array_insulation_resistance_10",  	# k-ohm
@@ -61,5 +61,5 @@ pvoutput = {
   "Energy Generation": "daily_power_yield",
   "Power Generation": "total_active_power",
   "Temperature": "internal_temp",
-  "Voltage": "grid_voltage"
+  "Voltage": "grid_voltage_a"
 }
