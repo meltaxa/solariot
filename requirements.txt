@@ -1,5 +1,5 @@
 paho-mqtt>=1.5.1
-pymodbus>=2.5.1
+pymodbus==2.4.0
 dweepy>=0.3.0
 influxdb>=5.3.1
 SungrowModbusTcpClient>=0.1.5

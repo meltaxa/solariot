@@ -10,7 +10,7 @@ Solariot is designed to allow any Modbus TCP enabled inverter to be queried usin
 
 Data is collected and can be streamed to destinations like dweet.io, MQTT, InfluxDB or PVOutput. 
 To visualise the telemetry, use a dashboard such as Grafana. For example, this is Meltaxa's Grafana dashboard on 
-<a href="https://solarspy.live">solarspy.live</a>:
+<a href="https://solariot.live">solariot.live</a>:
 <p align="center">
   <!--- 
   Github will by default use it's Camo CDN to cache images (https://github.blog/2014-01-28-proxying-user-images/). 
@@ -149,5 +149,6 @@ file as a pull request for Solariot inclusion.
 
 * [michael-robbins](https://github.com/michael-robbins) for Docker support, modbus contrib and other improvements.
 * [rpvelloso](https://github.com/rpvelloso) for the SungrowModbusTcpClient class that enables decryption of comms.
+* [shannonpasto](https://github.com/shannonpasto) for the Sungrow SG3KD modbus map.
 * [ShogunQld](https://github.com/ShogunQld) for the SMA Sunnuyboy modbus map.
 * [zyrorl](https://github.com/zyrorl) for MQTT support contrib.
