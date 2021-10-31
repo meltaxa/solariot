@@ -28,6 +28,8 @@ from influxdb import InfluxDBClient
 from importlib import import_module
 from threading import Thread
 
+from prometheus_client import start_http_server, Gauge
+
 import paho.mqtt.client as mqtt
 import datetime
 import requests
@@ -124,6 +126,37 @@ if hasattr(config, "mqtt_server"):
 else:
     mqtt_client = None
     logging.info("No MQTT configuration detected")
+
+if hasattr(config, "prometheus"):
+    class PrometheusPublisher(object):
+        def __init__(self, port):
+            self.publishport=port
+            self.metric_mappings={}
+            start_http_server(self.publishport)
+            logging.info(f"prometheus: http server started on port {self.publishport}")
+
+        def publish_status(self, metrics):
+            for key in metrics.keys():
+                if isinstance(metrics[key], str):
+                    # skipped because gagues dont handle strings
+                    logging.debug(f"prometheus: key {key} skipped(was a string)")
+                    continue
+                elif not key in self.metric_mappings.keys():
+                    logging.info(f"prometheus: key {key} doesnt have a gauge. making one now")
+                    self.metric_mappings[key] =  Gauge('solar_' + key, key)
+
+                self.metric_mappings[key].set(metrics[key])
+
+        def Clear_status(self):
+            for key in self.metric_mappings.keys():
+                key.set(0)
+
+    promport = getattr(config, "prometheus_port", "8000")
+    prom_client = PrometheusPublisher(promport)
+    logging.info("Configured Prometheus Client")
+else:
+    logging.info("No Prometheus configuration detected")
+    prom_client = None
 
 # Configure InfluxDB
 if hasattr(config, "influxdb_ip"):
@@ -387,6 +420,11 @@ def load_sma_register(registers):
     # Add timestamp
     inverter["00000 - Timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+def publish_prometheus(inverter):
+    result = prom_client.publish_status(inverter)
+    if result:
+        logging.info("Published to prometheus")
+
 def publish_influx(metrics):
     target = flux_client.write_points([metrics])
     logging.info("Published to InfluxDB")
@@ -481,6 +519,9 @@ while True:
     success = scrape_inverter()
 
     if not success:
+        # reset counters otherwise prometheus will keep on reporting whatever was pushed last
+        if prom_client is not None:
+          prom_client.Clear_status()
         logging.warning("Failed to scrape inverter, sleeping until next scan")
         time.sleep(config.scan_interval)
         continue
@@ -492,6 +533,10 @@ while True:
 
     if hasattr(config, "dweepy_uuid"):
         t = Thread(target=publish_dweepy, args=(inverter,))
+        t.start()
+
+    if prom_client is not None:
+        t = Thread(target=publish_prometheus, args=(inverter,))
         t.start()
 
     if flux_client is not None:
