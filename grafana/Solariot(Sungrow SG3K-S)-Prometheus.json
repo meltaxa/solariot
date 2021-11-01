@@ -172,7 +172,6 @@
     },
     {
       "datasource": null,
-      "description": "Voltage",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -182,7 +181,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -190,7 +189,7 @@
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -213,20 +212,24 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           },
-          "unit": "volt"
+          "unit": "watt"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
+        "h": 6,
         "w": 18,
         "x": 6,
         "y": 0
       },
-      "id": 3,
+      "id": 19,
       "options": {
         "legend": {
           "calcs": [
@@ -234,7 +237,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "right"
         },
         "tooltip": {
           "mode": "single"
@@ -243,21 +246,13 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "solar_grid_voltage",
-          "hide": false,
+          "expr": "solar_total_pv_power",
           "interval": "",
-          "legendFormat": "Grid",
-          "refId": "B"
-        },
-        {
-          "exemplar": true,
-          "expr": "solar_pv1_voltage",
-          "interval": "",
-          "legendFormat": "PV1",
+          "legendFormat": "PV",
           "refId": "A"
         }
       ],
-      "title": "Voltage",
+      "title": "Generating",
       "type": "timeseries"
     },
     {
@@ -286,7 +281,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 8,
         "w": 3,
         "x": 0,
         "y": 6
@@ -336,31 +331,27 @@
               },
               {
                 "color": "red",
-                "value": 80
-              },
-              {
-                "color": "#EAB839",
-                "value": 90
-              },
-              {
-                "color": "semi-dark-orange",
                 "value": 100
               },
               {
-                "color": "#EF843C",
-                "value": 110
+                "color": "semi-dark-orange",
+                "value": 250
+              },
+              {
+                "color": "#EAB839",
+                "value": 500
               },
               {
                 "color": "light-green",
-                "value": 120
+                "value": 1000
               },
               {
                 "color": "dark-green",
-                "value": 130
+                "value": 1200
               },
               {
                 "color": "#6ED0E0",
-                "value": 140
+                "value": 2500
               }
             ]
           },
@@ -369,7 +360,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 8,
         "w": 3,
         "x": 3,
         "y": 6
@@ -403,6 +394,96 @@
     },
     {
       "datasource": null,
+      "description": "Voltage",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "volt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 6
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "solar_grid_voltage",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Grid",
+          "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "solar_pv1_voltage",
+          "interval": "",
+          "legendFormat": "PV1",
+          "refId": "A"
+        }
+      ],
+      "title": "Voltage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -419,7 +500,23 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 200
+              },
+              {
+                "color": "light-green",
+                "value": 210
+              },
+              {
+                "color": "dark-green",
+                "value": 220
+              },
+              {
+                "color": "#EAB839",
+                "value": 240
+              },
+              {
+                "color": "semi-dark-red",
+                "value": 250
               }
             ]
           },
@@ -428,10 +525,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 3,
+        "h": 7,
+        "w": 2,
         "x": 0,
-        "y": 11
+        "y": 14
       },
       "id": 11,
       "options": {
@@ -462,6 +559,63 @@
     },
     {
       "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 2,
+        "x": 2,
+        "y": 14
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.2.1",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "solar_internal_temp",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Inverter Temp",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -477,7 +631,15 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 48
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 50
+              },
+              {
+                "color": "dark-red",
+                "value": 52
               }
             ]
           },
@@ -486,10 +648,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 3,
-        "x": 3,
-        "y": 11
+        "h": 7,
+        "w": 2,
+        "x": 4,
+        "y": 14
       },
       "id": 13,
       "options": {
@@ -569,10 +731,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 7,
         "w": 18,
         "x": 6,
-        "y": 11
+        "y": 14
       },
       "id": 2,
       "options": {
@@ -582,7 +744,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "right"
         },
         "tooltip": {
           "mode": "single"
@@ -607,63 +769,6 @@
       ],
       "title": "Current",
       "type": "timeseries"
-    },
-    {
-      "datasource": null,
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 0,
-        "y": 16
-      },
-      "id": 5,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "last"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "text": {},
-        "textMode": "auto"
-      },
-      "pluginVersion": "8.2.1",
-      "targets": [
-        {
-          "exemplar": true,
-          "expr": "solar_internal_temp",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Inverter Temp",
-      "type": "stat"
     }
   ],
   "schemaVersion": 31,
@@ -680,5 +785,5 @@
   "timezone": "browser",
   "title": "Solariot(Sungrow SG3K-S)",
   "uid": "SXBanhKnz",
-  "version": 6
+  "version": 10
 }
