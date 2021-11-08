@@ -771,6 +771,7 @@
       "type": "timeseries"
     }
   ],
+  "refresh": "30s",
   "schemaVersion": 31,
   "style": "dark",
   "tags": [],
