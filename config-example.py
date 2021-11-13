@@ -11,6 +11,10 @@ scan_interval = 10
 # Optional:
 dweepy_uuid = "random-uuid"
 
+# optional
+# prometheus = True
+# prometheus_port = 8000
+
 # Optional:
 influxdb_ip = "192.168.1.128"
 influxdb_port = 8086

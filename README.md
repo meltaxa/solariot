@@ -111,6 +111,21 @@ either install your own Grafana server or use their free
 A json export of solarspy.live Grafana dashboard is available under the grafana folder.
 The file will require editing to match your InfluxDb settings.
 
+### Prometheus and Grafana
+
+[Prometheus](https://prometheus.io/) can be enabled in config.py by setting `prometheus` to true. the data will then be exported on the port specified by `prometheus_port` (defaults to 8000).
+
+you can configure [Prometheus](https://prometheus.io/) to scrape this by adding a rule like this to your prometheus.yml
+```
+scrape_configs:
+  - job_name: 'solariot'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['localhost:8000']
+```
+
+alternatively if your using [Kubernetes](https://kubernetes.io/) you can use this [helm chart](https://github.com/slackerlinux85/HelmCharts/tree/master/helm-chart-sources/solariot)
+
 ### PVOutput.org
 
 We offer direct integration to publishing metrics to the 'Add Status' [API endpoint](https://pvoutput.org/help.html#api-addstatus) of PVOutput.
