@@ -1,4 +1,6 @@
 inverter_ip = "192.168.1.23"
+# set inverter_port to 502 for ModbusTCP,
+# If you have a WiNet-S dongle set to 8082 to use HTTP requests
 inverter_port = 502
 # Slave Defaults
 # Sungrow: 0x01
