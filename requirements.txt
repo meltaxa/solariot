@@ -4,3 +4,4 @@ dweepy>=0.3.0
 prometheus-client>=0.9
 influxdb>=5.3.1
 SungrowModbusTcpClient>=0.1.5
+SungrowModbusWebClient>-0.2.2
