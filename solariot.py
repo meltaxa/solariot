@@ -100,10 +100,8 @@ client_payload = {
     "port": config.inverter_port,
 }
 
-logging.info(f"Port:")
-
 if "sungrow-" in config.model:
-    if config.inverter_port == "8082":
+    if config.inverter_port == 8082:
         logging.info("Creating SungrowModbusWebClient")
         client = SungrowModbusWebClient.SungrowModbusWebClient(**client_payload)
     else:
