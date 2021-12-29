@@ -149,9 +149,9 @@ if hasattr(config, "prometheus"):
 
         def Clear_status(self):
             for key in self.metric_mappings.keys():
-                key.set(0)
+                self.metric_mappings[key].set(0)
 
-    promport = getattr(config, "prometheus_port", "8000")
+    promport = getattr(config, "prometheus_port", 8000)
     prom_client = PrometheusPublisher(promport)
     logging.info("Configured Prometheus Client")
 else:
