@@ -44,7 +44,7 @@ read_register = {
   "13018": "total_use_energy_10",
   "13019": "13019",
   "13020": "battery_voltage_10",
-  "13021": "battery current_10",
+  "13021": "battery_current_10",
   "13022": "battery_power",
   "13023": "battery_level_10",
   "13024": "battery_health_10",
