@@ -1,10 +1,12 @@
-FROM python:3.9
+FROM python:3.9-alpine
 
 WORKDIR /solariot
+
+RUN addgroup -g 2000 solariot && adduser -D -u 2000 -G solariot solariot
 COPY . /solariot/
+RUN apk add --no-cache gcc musl-dev && pip3 install --no-cache-dir --upgrade -r requirements.txt && apk del --no-cache gcc musl-dev
 
-RUN pip3 install --upgrade pip wheel && pip3 install --upgrade -r requirements.txt
-
+USER solariot
 ENV PYTHONPATH="/config:$PYTHONPATH"
-
+HEALTHCHECK CMD nc -z localhost 8000
 CMD ["python3", "solariot.py", "-v"]
