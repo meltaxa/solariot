@@ -8,5 +8,4 @@ RUN apk add --no-cache gcc musl-dev && pip3 install --no-cache-dir --upgrade -r 
 
 USER solariot
 ENV PYTHONPATH="/config:$PYTHONPATH"
-HEALTHCHECK CMD nc -z localhost 8000
 CMD ["python3", "solariot.py", "-v"]
