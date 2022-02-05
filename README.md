@@ -67,6 +67,13 @@ PVOutput, InfluxDB and more.
 3. Run the Docker image with the volume switch to mount your config directory as /config in the image
    * `docker run -v <localpath>:/config meltaxa/solariot`
 
+Note that the container runs as UID/GID 2000, so mounted config files will need to be readable. E.G.
+
+```bash
+chgrp 2000 $FILE # Set group of file to 2000
+chown g+r $FILE # Allow group 2000 to read file
+```
+
 ## Next Steps
 
 Now that you are collecting the inverter's data, you'll want to ultimately
