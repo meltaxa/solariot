@@ -48,3 +48,18 @@ scan = """{
   ]
 }"""
 
+# For field mappings, see
+# https://pvoutput.org/help/api_specification.html#add-status-service
+pvoutput = {
+  "Power Generation": "total_active_power",
+  "Power Consumption": "house_loads",
+  "Voltage": "grid_voltage",
+  "Temperature": "internal_temp",
+  "Extended Value v7": "grid_frequency",
+  "Extended Value v8": "internal_temp",
+  "Extended Value v9": "pv1_voltage",
+  "Extended Value v10": "pv1_current",
+  "Extended Value v11": "pv2_voltage",
+  "Extended Value v12": "pv2_current"
+}
+
