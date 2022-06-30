@@ -257,13 +257,6 @@ if hasattr(config, "pvoutput_api"):
             if self.metric_mappings.get("Voltage") in metrics:
                 parameters["v6"] = metrics[self.metric_mappings.get("Voltage")]
 
-            # Flags
-            if self.metric_mappings.get("Cumulative Flag") in metrics:
-                parameters["c1"] = metrics[self.metric_mappings.get("Cumulative Flag")]
-                
-            if self.metric_mappings.get("Net Flag") in metrics:
-                parameters["n"] = metrics[self.metric_mappings.get("Net Flag")]
-
             # Extended Values
             if self.metric_mappings.get("Extended Value v7") in metrics:
                 parameters["v7"] = metrics[self.metric_mappings.get("Extended Value v7")]
