@@ -1,5 +1,7 @@
 *.pyc
 
 venv/
+.venv/
 config.py
+telemetry.json
 .DS_Store
