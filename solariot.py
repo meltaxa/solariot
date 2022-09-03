@@ -214,12 +214,21 @@ if hasattr(config, "pvoutput_api"):
             """
             See https://pvoutput.org/help.html#api-addstatus
             Post the following values:
-            * v1 - Energy Generation
-            * v2 - Power Generation
-            * v3 - Energy Consumption
-            * v4 - Power Consumption
-            * v5 - Temperature
-            * v6 - Voltage
+            * v1  - Energy Generation
+            * v2  - Power Generation
+            * v3  - Energy Consumption
+            * v4  - Power Consumption
+            * v5  - Temperature
+            * v6  - Voltage
+            * c1  - Cumulative Flag
+            * n   - Net Flag
+            * v7  - Extended Value v7
+            * v8  - Extended Value v8
+            * v9  - Extended Value v9
+            * v10 - Extended Value v10
+            * v11 - Extended Value v11
+            * v12 - Extended Value v12
+            * m1  - Text Message 1
             """
             at_least_one_of = set(["v1", "v2", "v3", "v4"])
 
@@ -262,6 +271,29 @@ if hasattr(config, "pvoutput_api"):
 
             if self.metric_mappings.get("Voltage") in metrics:
                 parameters["v6"] = metrics[self.metric_mappings.get("Voltage")]
+
+            # Extended Values
+            if self.metric_mappings.get("Extended Value v7") in metrics:
+                parameters["v7"] = metrics[self.metric_mappings.get("Extended Value v7")]
+                
+            if self.metric_mappings.get("Extended Value v8") in metrics:
+                parameters["v8"] = metrics[self.metric_mappings.get("Extended Value v8")]
+                
+            if self.metric_mappings.get("Extended Value v9") in metrics:
+                parameters["v9"] = metrics[self.metric_mappings.get("Extended Value v9")]
+                
+            if self.metric_mappings.get("Extended Value v10") in metrics:
+                parameters["v10"] = metrics[self.metric_mappings.get("Extended Value v10")]
+                
+            if self.metric_mappings.get("Extended Value v11") in metrics:
+                parameters["v11"] = metrics[self.metric_mappings.get("Extended Value v11")]
+                
+            if self.metric_mappings.get("Extended Value v12") in metrics:
+                parameters["v12"] = metrics[self.metric_mappings.get("Extended Value v12")]
+            
+            # Text Message String truncated to PVOutput's max of 30 Characters
+            if self.metric_mappings.get("Text Message 1") in metrics:
+                parameters["m1"] = str(metrics[self.metric_mappings.get("Text Message 1")])[:30]
 
             if not at_least_one_of.intersection(parameters.keys()):
                 raise RuntimeError(
