@@ -43,16 +43,20 @@ import sys
 import re
 
 
-MIN_SIGNED   = -2147483648
-MAX_UNSIGNED =  4294967295
+MIN_SIGNED = -2147483648
+MAX_UNSIGNED = 4294967295
 
-requests.packages.urllib3.disable_warnings() 
+requests.packages.urllib3.disable_warnings()
 
 # Load in the config module
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--config", default="config", help="Python module to load as our config")
-parser.add_argument("-v", "--verbose", action="count", default=0, help="Level of verbosity 0=ERROR 1=INFO 2=DEBUG")
-parser.add_argument("--one-shot", action="store_true", help="Run solariot just once then exit, useful for cron based execution")
+parser.add_argument("-c", "--config", default="config",
+                    help="Python module to load as our config")
+parser.add_argument("-v", "--verbose", action="count", default=0,
+                    help="Level of verbosity 0=ERROR 1=INFO 2=DEBUG")
+parser.add_argument("--one-shot", action="store_true",
+                    help="Run solariot just once then exit, useful for cron based execution")
+
 args = parser.parse_args()
 
 if args.verbose == 0:
@@ -73,13 +77,13 @@ except ModuleNotFoundError:
 # SMA datatypes and their register lengths
 # S = Signed Number, U = Unsigned Number, STR = String
 sma_moddatatype = {
-  "S16": 1,
-  "U16": 1,
-  "S32": 2,
-  "U32": 2,
-  "U64": 4,
-  "STR16": 8,
-  "STR32": 16,
+    "S16": 1,
+    "U16": 1,
+    "S32": 2,
+    "U32": 2,
+    "U64": 4,
+    "STR16": 8,
+    "STR32": 16,
 }
 
 # Load the modbus register map for the inverter
@@ -103,10 +107,12 @@ client_payload = {
 if "sungrow-" in config.model:
     if config.inverter_port == 8082:
         logging.info("Creating SungrowModbusWebClient")
-        client = SungrowModbusWebClient.SungrowModbusWebClient(**client_payload)
+        client = SungrowModbusWebClient.SungrowModbusWebClient(
+            **client_payload)
     else:
         logging.info("Creating SungrowModbusTcpClient")
-        client = SungrowModbusTcpClient.SungrowModbusTcpClient(**client_payload)
+        client = SungrowModbusTcpClient.SungrowModbusTcpClient(
+            **client_payload)
 else:
     logging.info("Creating ModbusTcpClient")
     client = ModbusTcpClient(**client_payload)
@@ -135,20 +141,23 @@ else:
 if hasattr(config, "prometheus"):
     class PrometheusPublisher(object):
         def __init__(self, port):
-            self.publishport=port
-            self.metric_mappings={}
+            self.publishport = port
+            self.metric_mappings = {}
             start_http_server(self.publishport)
-            logging.info(f"prometheus: http server started on port {self.publishport}")
+            logging.info(
+                f"prometheus: http server started on port {self.publishport}")
 
         def publish_status(self, metrics):
             for key in metrics.keys():
                 if isinstance(metrics[key], str):
                     # skipped because gagues dont handle strings
-                    logging.debug(f"prometheus: key {key} skipped(was a string)")
+                    logging.debug(
+                        f"prometheus: key {key} skipped(was a string)")
                     continue
                 elif not key in self.metric_mappings.keys():
-                    logging.info(f"prometheus: key {key} doesnt have a gauge. making one now")
-                    self.metric_mappings[key] =  Gauge('solar_' + key, key)
+                    logging.info(
+                        f"prometheus: key {key} doesnt have a gauge. making one now")
+                    self.metric_mappings[key] = Gauge('solar_' + key, key)
 
                 self.metric_mappings[key].set(metrics[key])
 
@@ -205,12 +214,21 @@ if hasattr(config, "pvoutput_api"):
             """
             See https://pvoutput.org/help.html#api-addstatus
             Post the following values:
-            * v1 - Energy Generation
-            * v2 - Power Generation
-            * v3 - Energy Consumption
-            * v4 - Power Consumption
-            * v5 - Temperature
-            * v6 - Voltage
+            * v1  - Energy Generation
+            * v2  - Power Generation
+            * v3  - Energy Consumption
+            * v4  - Power Consumption
+            * v5  - Temperature
+            * v6  - Voltage
+            * c1  - Cumulative Flag
+            * n   - Net Flag
+            * v7  - Extended Value v7
+            * v8  - Extended Value v8
+            * v9  - Extended Value v9
+            * v10 - Extended Value v10
+            * v11 - Extended Value v11
+            * v12 - Extended Value v12
+            * m1  - Text Message 1
             """
             at_least_one_of = set(["v1", "v2", "v3", "v4"])
 
@@ -225,32 +243,64 @@ if hasattr(config, "pvoutput_api"):
 
             parameters = {
                 "d": now.strftime("%Y%m%d"),
-                "t": now.strftime("%H:%M"),
-                "c1": 1,
+                "t": now.strftime("%H:%M")
             }
 
-            if self.metric_mappings.get("Energy Generation") in metrics:
-                parameters["v1"] = metrics[self.metric_mappings.get("Energy Generation")]
+            if config.pvoutput_cumulative is True:
+                parameters['c1'] = 1
+
+            if self.metric_mappings.get("Energy Generation") in metrics and config.pvoutput_power_only is False:
+                parameters["v1"] = metrics[self.metric_mappings.get(
+                    "Energy Generation")]
 
             if self.metric_mappings.get("Power Generation") in metrics:
-                parameters["v2"] = metrics[self.metric_mappings.get("Power Generation")]
+                parameters["v2"] = metrics[self.metric_mappings.get(
+                    "Power Generation")]
 
-            if self.metric_mappings.get("Energy Consumption") in metrics:
-                parameters["v3"] = metrics[self.metric_mappings.get("Energy Consumption")]
+            if self.metric_mappings.get("Energy Consumption") in metrics and config.pvoutput_power_only is False:
+                parameters["v3"] = metrics[self.metric_mappings.get(
+                    "Energy Consumption")]
 
             if self.metric_mappings.get("Power Consumption") in metrics:
-                parameters["v4"] = metrics[self.metric_mappings.get("Power Consumption")]
+                parameters["v4"] = metrics[self.metric_mappings.get(
+                    "Power Consumption")]
 
             if self.metric_mappings.get("Temperature") in metrics:
-                parameters["v5"] = metrics[self.metric_mappings.get("Temperature")]
+                parameters["v5"] = metrics[self.metric_mappings.get(
+                    "Temperature")]
 
             if self.metric_mappings.get("Voltage") in metrics:
                 parameters["v6"] = metrics[self.metric_mappings.get("Voltage")]
 
-            if not at_least_one_of.intersection(parameters.keys()):
-                raise RuntimeError("Metrics => PVOutput mapping failed, please review metric names and update")
+            # Extended Values
+            if self.metric_mappings.get("Extended Value v7") in metrics:
+                parameters["v7"] = metrics[self.metric_mappings.get("Extended Value v7")]
+                
+            if self.metric_mappings.get("Extended Value v8") in metrics:
+                parameters["v8"] = metrics[self.metric_mappings.get("Extended Value v8")]
+                
+            if self.metric_mappings.get("Extended Value v9") in metrics:
+                parameters["v9"] = metrics[self.metric_mappings.get("Extended Value v9")]
+                
+            if self.metric_mappings.get("Extended Value v10") in metrics:
+                parameters["v10"] = metrics[self.metric_mappings.get("Extended Value v10")]
+                
+            if self.metric_mappings.get("Extended Value v11") in metrics:
+                parameters["v11"] = metrics[self.metric_mappings.get("Extended Value v11")]
+                
+            if self.metric_mappings.get("Extended Value v12") in metrics:
+                parameters["v12"] = metrics[self.metric_mappings.get("Extended Value v12")]
+            
+            # Text Message String truncated to PVOutput's max of 30 Characters
+            if self.metric_mappings.get("Text Message 1") in metrics:
+                parameters["m1"] = str(metrics[self.metric_mappings.get("Text Message 1")])[:30]
 
-            response = requests.post(url=self.status_url, headers=self.headers, params=parameters)
+            if not at_least_one_of.intersection(parameters.keys()):
+                raise RuntimeError(
+                    "Metrics => PVOutput mapping failed, please review metric names and update")
+
+            response = requests.post(
+                url=self.status_url, headers=self.headers, params=parameters)
 
             if response.status_code != requests.codes.ok:
                 raise RuntimeError(response.text)
@@ -274,6 +324,7 @@ else:
 inverter = {}
 bus = json.loads(modmap.scan)
 
+
 def load_registers(register_type, start, count=100):
     try:
         if register_type == "read":
@@ -291,7 +342,8 @@ def load_registers(register_type, start, count=100):
         else:
             raise RuntimeError(f"Unsupported register type: {type}")
     except Exception as err:
-        logging.warning("No data. Try increasing the timeout or scan interval.")
+        logging.warning(
+            "No data. Try increasing the timeout or scan interval.")
         return False
 
     if rr.isError():
@@ -303,11 +355,14 @@ def load_registers(register_type, start, count=100):
         return
 
     if len(rr.registers) != count:
-        logging.warning(f"Mismatched number of registers read {len(rr.registers)} != {count}")
+        logging.warning(
+            f"Mismatched number of registers read {len(rr.registers)} != {count}")
         return
 
-    overflow_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_\.]+)_overflow$")
-    divide_regex = re.compile(r"(?P<register_name>[a-zA-Z0-9_]+)_(?P<divide_by>[0-9\.]+)$")
+    overflow_regex = re.compile(
+        r"(?P<register_name>[a-zA-Z0-9_\.]+)_overflow$")
+    divide_regex = re.compile(
+        r"(?P<register_name>[a-zA-Z0-9_]+)_(?P<divide_by>[0-9\.]+)$")
 
     for num in range(0, count):
         run = int(start) + num + 1
@@ -338,7 +393,8 @@ def load_registers(register_type, start, count=100):
                 if indicator_register is not None:
                     # Given register '5084' and knowing start of '5000' we can assume the index
                     # Of our indicator value is 5084 - 5000 - 1 (because of the 'off by 1')
-                    indicator_value = rr.registers[indicator_register - int(start) - 1]
+                    indicator_value = rr.registers[indicator_register -
+                                                   int(start) - 1]
 
                     if indicator_value == 65535:
                         # We are in overflow
@@ -350,7 +406,8 @@ def load_registers(register_type, start, count=100):
 
             if should_divide:
                 register_name = should_divide["register_name"]
-                register_value = float(register_value) / float(should_divide["divide_by"])
+                register_value = float(register_value) / \
+                    float(should_divide["divide_by"])
 
             # Set the final register name and value, any adjustments above included
             inverter[register_name] = register_value
@@ -363,6 +420,8 @@ def load_registers(register_type, start, count=100):
     return True
 
 # Function for polling data from the target and triggering writing to log file if set
+
+
 def load_sma_register(registers):
     # Request each register from datasets, omit first row which contains only column headers
     for thisrow in registers:
@@ -370,7 +429,7 @@ def load_sma_register(registers):
         startPos = thisrow[1]
         type = thisrow[2]
         format = thisrow[3]
-    
+
         # If the connection is somehow not possible (e.g. target not responding)
         # show a error message instead of excepting and stopping
         try:
@@ -381,10 +440,12 @@ def load_sma_register(registers):
             )
         except Exception:
             thisdate = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            logging.error(f"{thisdate}: Connection not possible, check settings or connection")
+            logging.error(
+                f"{thisdate}: Connection not possible, check settings or connection")
             return
-    
-        message = BinaryPayloadDecoder.fromRegisters(received.registers, endian=Endian.Big)
+
+        message = BinaryPayloadDecoder.fromRegisters(
+            received.registers, endian=Endian.Big)
 
         # Provide the correct result depending on the defined datatype
         if type == "S32":
@@ -404,7 +465,7 @@ def load_sma_register(registers):
         else:
             # If no data type is defined do raw interpretation of the delivered data
             interpreted = message.decode_16bit_uint()
-    
+
         # Check for "None" data before doing anything else
         if ((interpreted == MIN_SIGNED) or (interpreted == MAX_UNSIGNED)):
             displaydata = None
@@ -418,42 +479,49 @@ def load_sma_register(registers):
                 displaydata = float(interpreted) / 10
             else:
                 displaydata = interpreted
-    
+
         logging.debug(f"************** {name} = {displaydata}")
         inverter[name] = displaydata
-  
+
     # Add timestamp
     inverter["00000 - Timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 def publish_prometheus(inverter):
     result = prom_client.publish_status(inverter)
     if result:
         logging.info("Published to prometheus")
 
+
 def publish_influx(metrics):
     target = flux_client.write_points([metrics])
     logging.info("Published to InfluxDB")
     return target
+
 
 def publish_dweepy(inverter):
     result = dweepy.dweet_for(config.dweepy_uuid, inverter)
     logging.info("Published to dweet.io")
     return result
 
+
 def publish_mqtt(inverter):
     # After a while you'll need to reconnect, so just reconnect before each publish
     mqtt_client.reconnect()
 
-    result = mqtt_client.publish(config.mqtt_topic, json.dumps(inverter).replace('"', '\"'))
+    result = mqtt_client.publish(
+        config.mqtt_topic, json.dumps(inverter).replace('"', '\"'))
     result.wait_for_publish()
 
     if result.rc != mqtt.MQTT_ERR_SUCCESS:
         # See https://github.com/eclipse/paho.mqtt.python/blob/master/src/paho/mqtt/client.py#L149 for error code mapping
-        logging.error(f"Failed to publish to MQTT with error code: {result.rc}")
+        logging.error(
+            f"Failed to publish to MQTT with error code: {result.rc}")
     else:
         logging.info("Published to MQTT")
 
     return result
+
 
 def publish_pvoutput(inverter):
     result = pvoutput_client.publish_status(inverter)
@@ -464,10 +532,19 @@ def publish_pvoutput(inverter):
         logging.info("Published to PVOutput")
     return result
 
-def save_json(inverter):
+
+def save_json(inverter, append_log):
     try:
-        f = open(config.json_file,'w')
-        f.write(json.dumps(inverter))
+        # Default to one line per file.
+        # If the config.append_log value is true, then open the file in append mode.
+        # We will also need newlines if we are in append mode. Add that as a suffix
+        file_mode = 'w'
+        suffix = ''
+        if append_log is True:
+            file_mode = 'a'
+            suffix = '\n'
+        f = open(config.json_file, file_mode)
+        f.write(json.dumps(inverter)+suffix)
         f.close()
     except Exception as err:
         logging.error("Error writing telemetry to file: %s" % err)
@@ -475,6 +552,8 @@ def save_json(inverter):
     logging.info("Inverter telemetry written to %s file." % config.json_file)
 
 # Core monitoring loop
+
+
 def scrape_inverter():
     """ Connect to the inverter and scrape the metrics """
     client.connect()
@@ -487,7 +566,7 @@ def scrape_inverter():
         for i in bus["holding"]:
             if not load_registers("holding", i["start"], int(i["range"])):
                 return False
-  
+
         # Sungrow inverter specifics:
         # Work out if the grid power is being imported or exported
         if config.model == "sungrow-sh5k":
@@ -512,12 +591,14 @@ def scrape_inverter():
     elif "sma-" in config.model:
         load_sma_register(modmap.sma_registers)
     else:
-        raise RuntimeError(f"Unsupported inverter model detected: {config.model}")
+        raise RuntimeError(
+            f"Unsupported inverter model detected: {config.model}")
 
     client.close()
 
     logging.info(inverter)
     return True
+
 
 while True:
     # Scrape the inverter
@@ -526,7 +607,7 @@ while True:
     if not success:
         # reset counters otherwise prometheus will keep on reporting whatever was pushed last
         if prom_client is not None:
-          prom_client.Clear_status()
+            prom_client.Clear_status()
         logging.warning("Failed to scrape inverter, sleeping until next scan")
         time.sleep(config.scan_interval)
         continue
@@ -561,7 +642,7 @@ while True:
         t.start()
 
     if hasattr(config, "json_file"):
-        t = Thread(target=save_json, args=(inverter,))
+        t = Thread(target=save_json, args=(inverter, config.append_log))
         t.start()
 
     if args.one_shot:
