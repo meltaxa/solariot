@@ -1,5 +1,5 @@
 paho-mqtt>=1.5.1
-pymodbus==2.5.3
+pymodbus==3.1.0
 dweepy>=0.3.0
 prometheus-client>=0.9
 influxdb>=5.3.1
