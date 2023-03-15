@@ -62,4 +62,3 @@ pvoutput = {
   "Extended Value v11": "pv2_voltage",
   "Extended Value v12": "pv2_current"
 }
-
