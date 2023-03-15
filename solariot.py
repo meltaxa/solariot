@@ -246,12 +246,13 @@ if hasattr(config, "pvoutput_api"):
                 "t": now.strftime("%H:%M")
             }
 
+            # Standard Values
+
             if getattr(config, "pvoutput_cumulative", True) is True:
                 parameters['c1'] = 1
 
             if self.metric_mappings.get("Energy Generation") in metrics and getattr(config, "pvoutput_power_only", False) is False:
-                parameters["v1"] = metrics[self.metric_mappings.get(
-                    "Energy Generation")]
+                parameters["v1"] = metrics[self.metric_mappings.get("Energy Generation")]
 
             if self.metric_mappings.get("Power Generation") in metrics:
                 parameters["v2"] = metrics[self.metric_mappings.get(
