@@ -64,8 +64,10 @@ PVOutput, InfluxDB and more.
 
 2. Create a config.py (see config-example.py) and place it in the config directory.
 
-3. Run the Docker image with the volume switch to mount your config directory as /config in the image
-   * `docker run -v <localpath>:/config meltaxa/solariot`
+3. Run the Docker image with your local TZ & the volume switch to mount your config directory as /config in the image
+   * `docker run -e TZ=Australia/Melbourne -v <localpath>:/config meltaxa/solariot`
+
+It's recommended to set the TZ correctly especially when publishing to PVOutput otherwise UTC will be picked by default and your metrics will appear wrong in PVOutput.
 
 Note that the container runs as UID/GID 2000, so mounted config files will need to be readable. E.G.
 
