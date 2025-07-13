@@ -36,6 +36,7 @@ import datetime
 import requests
 import argparse
 import logging
+import logging.config
 import dweepy
 import json
 import time
@@ -59,17 +60,25 @@ parser.add_argument("--one-shot", action="store_true",
 
 args = parser.parse_args()
 
-if args.verbose == 0:
-    log_level = logging.WARNING
-elif args.verbose == 1:
-    log_level = logging.INFO
-else:
-    log_level = logging.DEBUG
 
-logging.basicConfig(level=log_level)
 
 try:
     config = import_module(args.config)
+    if hasattr(config, "logger_config"):  
+        # Set up logging based on the config module
+        logging.config.dictConfig(config.logger_config)
+    else:
+        # Set up logging based on verbose runtime argument
+        if args.verbose == 0:
+            log_level = logging.WARNING
+        elif args.verbose == 1:
+            log_level = logging.INFO
+        else:
+            log_level = logging.DEBUG
+        
+        logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+        logging.info(f"Logger configured at level {log_level} since verbose={args.verbose}")
+
     logging.info(f"Loaded config {config.model}")
 except ModuleNotFoundError:
     parser.error(f"Unable to locate {args.config}.py")
@@ -557,6 +566,7 @@ def save_json(inverter, append_log):
 
 def scrape_inverter():
     """ Connect to the inverter and scrape the metrics """
+    logging.debug("Begin scraping...")
     client.connect()
 
     if "sungrow-" in config.model:
@@ -597,7 +607,18 @@ def scrape_inverter():
 
     client.close()
 
-    logging.info(inverter)
+    # Filter out the keys we want to log
+    # keys_to_log = ['battery_level', 'battery_voltage', 'daily_export_energy', 'daily_charge_energy', 'daily_use_energy', 'grid_voltage_a', 'grid_voltage_b', 'grid_voltage_c']
+    
+    # Otherwise log everything
+    keys_to_log = []
+    
+    if keys_to_log:
+        inverter_to_log = {k: inverter[k] for k in keys_to_log if k in inverter}
+    else:
+        inverter_to_log = inverter
+
+    logging.debug("Done scraping data:\n %s", json.dumps(inverter_to_log, indent=2))
     return True
 
 
