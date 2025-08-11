@@ -48,3 +48,26 @@ influxdb_verify_ssl = False
 #json_file = "telemetry.json"
 # This option, when set to True, writes new lines to the end of the current file.  When set to False you get a single (latest) line per file
 #append_log = False
+
+
+# Logging config. If not specified, default is being used.
+logger_config = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '[%(asctime)s] %(levelname)s - %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
+            'level': 'INFO',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
