@@ -7,5 +7,5 @@ COPY . /solariot/
 RUN apk add --no-cache gcc musl-dev && pip3 install --no-cache-dir --upgrade -r requirements.txt && apk del --no-cache gcc musl-dev
 
 USER solariot
-ENV PYTHONPATH="/config:$PYTHONPATH"
+ENV PYTHONPATH="/config"
 CMD ["python3", "solariot.py", "-v"]
