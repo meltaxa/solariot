@@ -702,6 +702,18 @@ def scrape_inverter():
             except Exception:
                 pass
 
+        # battery_power_wide's native sign is negative=charging,
+        # positive=discharging - the opposite of PVOutput's b1 convention
+        # (positive=charge, negative=discharge). Verified live against a
+        # forced charge (power_flow_status charging bit set, register read
+        # negative). Keep the raw register as-is and flip the sign only in
+        # this derived field, used solely for the PVOutput mapping.
+        if config.model == "sungrow-sh10rs":
+            try:
+                inverter["battery_power_pvoutput"] = -1 * inverter["battery_power_wide"]
+            except Exception:
+                pass
+
         try:
             inverter["timestamp"] = "%s/%s/%s %s:%02d:%02d" % (
                 inverter["day"],
