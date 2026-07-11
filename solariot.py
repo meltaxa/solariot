@@ -250,6 +250,12 @@ if hasattr(config, "pvoutput_api"):
             * v6  - Voltage
             * c1  - Cumulative Flag
             * n   - Net Flag
+            * b1  - Battery Power
+            * b2  - Battery State of Charge
+            * b3  - Battery Size (Usable)
+            * b4  - Battery Lifetime Charge
+            * b5  - Battery Lifetime Discharge
+            * b6  - Battery State
             * v7  - Extended Value v7
             * v8  - Extended Value v8
             * v9  - Extended Value v9
@@ -305,6 +311,33 @@ if hasattr(config, "pvoutput_api"):
 
             if self.metric_mappings.get("Voltage") in metrics:
                 parameters["v6"] = metrics[self.metric_mappings.get("Voltage")]
+
+            # Battery Values
+            if self.metric_mappings.get("Battery Power") in metrics:
+                parameters["b1"] = metrics[self.metric_mappings.get("Battery Power")]
+
+            if self.metric_mappings.get("Battery State of Charge") in metrics:
+                parameters["b2"] = metrics[
+                    self.metric_mappings.get("Battery State of Charge")
+                ]
+
+            if self.metric_mappings.get("Battery Size (Usable)") in metrics:
+                parameters["b3"] = metrics[
+                    self.metric_mappings.get("Battery Size (Usable)")
+                ]
+
+            if self.metric_mappings.get("Battery Lifetime Charge") in metrics:
+                parameters["b4"] = metrics[
+                    self.metric_mappings.get("Battery Lifetime Charge")
+                ]
+
+            if self.metric_mappings.get("Battery Lifetime Discharge") in metrics:
+                parameters["b5"] = metrics[
+                    self.metric_mappings.get("Battery Lifetime Discharge")
+                ]
+
+            if self.metric_mappings.get("Battery State") in metrics:
+                parameters["b6"] = metrics[self.metric_mappings.get("Battery State")]
 
             # Extended Values
             if self.metric_mappings.get("Extended Value v7") in metrics:
@@ -413,58 +446,101 @@ def load_registers(register_type, start, count=100):
     divide_regex = re.compile(
         r"(?P<register_name>[a-zA-Z0-9_]+)_(?P<divide_by>[0-9\.]+)$"
     )
+    # Sungrow's U32/S32 registers span two consecutive registers. Per their
+    # Modbus spec: "little-endian for double-word data, big-endian for byte
+    # data" - i.e. the lower address holds the low word, the next one up
+    # holds the high word (each word itself is a normal big-endian U16).
+    # S16 registers are a single register that needs sign-conversion only.
+    widetype_regex = re.compile(
+        r"(?P<register_name>[a-zA-Z0-9_\.]+)_(?P<type>u32|s32|s16)$"
+    )
+
+    def decode_register(register_map, register_name, register_value, num):
+        # Check if the modbus map has an '_overflow' on the end
+        # If so the value 'could' be negative (65535 - x) where (-x) is the actual number
+        # So a value of '64486' actually represents '-1049'
+        # We rely on a second '_indicator' register to tell is if it's actually negative or not, otherwise it's ambigious!
+        should_overflow = overflow_regex.match(register_name)
+
+        if should_overflow:
+            register_name = should_overflow["register_name"]
+
+            # Find the indicator register value
+            indicator_name = f"{register_name}_indicator"
+
+            for reg_num, reg_name in register_map.items():
+                if reg_name == indicator_name:
+                    indicator_register = int(reg_num)
+                    break
+            else:
+                indicator_register = None
+
+            if indicator_register is not None:
+                # Given register '5084' and knowing start of '5000' we can assume the index
+                # Of our indicator value is 5084 - 5000 - 1 (because of the 'off by 1')
+                indicator_value = rr.registers[indicator_register - int(start) - 1]
+
+                if indicator_value == 65535:
+                    # We are in overflow
+                    register_value = -1 * (65535 - register_value)
+
+        # Check if the modbus map has an '_10' or '_100' etc on the end
+        # If so, we divide by that and drop it from the name. This is
+        # checked (but not yet applied) before the '_u32'/'_s32' check
+        # below, since a wide-type register can also carry a scale
+        # suffix, e.g. 'total_output_energy_u32_10'.
+        should_divide = divide_regex.match(register_name)
+        divide_by = float(should_divide["divide_by"]) if should_divide else None
+        name_after_divide_strip = (
+            should_divide["register_name"] if should_divide else register_name
+        )
+
+        # Check if the (possibly scale-stripped) name has a '_u32',
+        # '_s32' or '_s16' on the end. u32/s32 mean this register is the
+        # low word of a 32-bit value; combine it with the next register
+        # (the high word). s16 means this single register needs
+        # sign-conversion only. Either way, this happens before any
+        # scaling is applied.
+        should_widen = widetype_regex.match(name_after_divide_strip)
+
+        if should_widen:
+            register_name = should_widen["register_name"]
+            widetype = should_widen["type"]
+
+            if widetype in ("u32", "s32"):
+                high_word = rr.registers[num + 1]
+                register_value = (high_word << 16) | register_value
+
+                if widetype == "s32" and register_value > 0x7FFFFFFF:
+                    register_value -= 0x100000000
+            elif widetype == "s16" and register_value > 0x7FFF:
+                register_value -= 0x10000
+        elif should_divide:
+            register_name = name_after_divide_strip
+
+        if divide_by is not None:
+            register_value = float(register_value) / divide_by
+
+        return register_name, register_value
 
     for num in range(0, count):
         run = int(start) + num + 1
 
         if register_type == "read" and modmap.read_register.get(str(run)):
-            register_name = modmap.read_register.get(str(run))
-            register_value = rr.registers[num]
-
-            # Check if the modbus map has an '_overflow' on the end
-            # If so the value 'could' be negative (65535 - x) where (-x) is the actual number
-            # So a value of '64486' actually represents '-1049'
-            # We rely on a second '_indicator' register to tell is if it's actually negative or not, otherwise it's ambigious!
-            should_overflow = overflow_regex.match(register_name)
-
-            if should_overflow:
-                register_name = should_overflow["register_name"]
-
-                # Find the indicator register value
-                indicator_name = f"{register_name}_indicator"
-
-                for reg_num, reg_name in modmap.read_register.items():
-                    if reg_name == indicator_name:
-                        indicator_register = int(reg_num)
-                        break
-                else:
-                    indicator_register = None
-
-                if indicator_register is not None:
-                    # Given register '5084' and knowing start of '5000' we can assume the index
-                    # Of our indicator value is 5084 - 5000 - 1 (because of the 'off by 1')
-                    indicator_value = rr.registers[indicator_register - int(start) - 1]
-
-                    if indicator_value == 65535:
-                        # We are in overflow
-                        register_value = -1 * (65535 - register_value)
-
-            # Check if the modbus map has an '_10' or '_100' etc on the end
-            # If so, we divide by that and drop it from the name
-            should_divide = divide_regex.match(register_name)
-
-            if should_divide:
-                register_name = should_divide["register_name"]
-                register_value = float(register_value) / float(
-                    should_divide["divide_by"]
-                )
-
-            # Set the final register name and value, any adjustments above included
+            register_name, register_value = decode_register(
+                modmap.read_register,
+                modmap.read_register.get(str(run)),
+                rr.registers[num],
+                num,
+            )
             inverter[register_name] = register_value
         elif register_type == "holding" and modmap.holding_register.get(str(run)):
-            register_name = modmap.holding_register.get(str(run))
-            register_value = rr.registers[num]
-
+            register_name, register_value = decode_register(
+                modmap.holding_register,
+                modmap.holding_register.get(str(run)),
+                rr.registers[num],
+                num,
+            )
             inverter[register_name] = register_value
 
     return True
