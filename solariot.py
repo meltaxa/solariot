@@ -124,7 +124,7 @@ client_payload = {
     "port": config.inverter_port,
 }
 
-if "sungrow-" in config.model:
+if "sungrow-" in config.model and not getattr(config, "force_plain_modbus", False):
     if config.inverter_port == 8082:
         logging.info("Creating SungrowModbusWebClient")
         client = SungrowModbusWebClient.SungrowModbusWebClient(**client_payload)
